@@ -1,0 +1,95 @@
+{
+  "campaign_shifts": [
+    {
+      "id": "CAMPAIGN_SHIFT_01",
+      "shiftNumber": 1,
+      "title": "Shift 1: The Onboarding Watch",
+      "subtitle": "Perimeter Reconnaissance & Baseline Discipline",
+      "requiredTier": 1,
+      "difficulty": "Introductory",
+      "briefing": "Welcome to Sector 4 Triage, Analyst. Your objective on this shift is perimeter perimeter discipline. Filter out routine internal vulnerability scanning while blocking hostile reconnaissance sweeps and credential stuffing.",
+      "scenarioIds": [
+        "SCENARIO_PORT_SCAN_01",
+        "SCENARIO_BENIGN_SCANNER_01",
+        "SCENARIO_BRUTE_FORCE_01"
+      ],
+      "scheduledOffsets": [15, 75, 140],
+      "unlocksNext": "CAMPAIGN_SHIFT_02",
+      "rewardTier": 1,
+      "targetScore": 250
+    },
+    {
+      "id": "CAMPAIGN_SHIFT_02",
+      "shiftNumber": 2,
+      "title": "Shift 2: Phishing & Payload Infiltration",
+      "subtitle": "Social Engineering & Living-off-the-Land Binaries",
+      "requiredTier": 1,
+      "difficulty": "Standard",
+      "briefing": "Adversaries are targeting employee inboxes with typosquatted portals. Distinguish authorized DevOps automation pushes from weaponized Office macros spawning hidden PowerShell reverse shells.",
+      "scenarioIds": [
+        "SCENARIO_PHISHING_CLICK_01",
+        "SCENARIO_BENIGN_ADMIN_01",
+        "SCENARIO_MACRO_PS_01"
+      ],
+      "scheduledOffsets": [20, 85, 160],
+      "unlocksNext": "CAMPAIGN_SHIFT_03",
+      "rewardTier": 2,
+      "targetScore": 300
+    },
+    {
+      "id": "CAMPAIGN_SHIFT_03",
+      "shiftNumber": 3,
+      "title": "Shift 3: Covert Channels & Beaconing",
+      "subtitle": "Time-Series Jitter Analysis & DNS Exfiltration",
+      "requiredTier": 2,
+      "difficulty": "Advanced",
+      "briefing": "Adversaries have bypassed perimeter boundary rules. Use your newly unlocked Packet Capture Dissector and Threat Intel feed to identify covert DNS TXT exfiltration and periodic C2 heartbeat beacons.",
+      "scenarioIds": [
+        "SCENARIO_DNS_TUNNEL_01",
+        "SCENARIO_C2_BEACON_01",
+        "SCENARIO_BENIGN_SCANNER_01"
+      ],
+      "scheduledOffsets": [25, 95, 180],
+      "unlocksNext": "CAMPAIGN_SHIFT_04",
+      "rewardTier": 2,
+      "targetScore": 320
+    },
+    {
+      "id": "CAMPAIGN_SHIFT_04",
+      "shiftNumber": 4,
+      "title": "Shift 4: The Insider & Supply Chain Breach",
+      "subtitle": "UEBA Anomaly Detection & Signed Binary Backdoors",
+      "requiredTier": 2,
+      "difficulty": "High",
+      "briefing": "Threats are now originating from inside authorized perimeters. Distinguish legitimate off-hours database replication from rogue insider data egress, and inspect signed vendor binaries reading LSASS memory.",
+      "scenarioIds": [
+        "SCENARIO_INSIDER_EXFIL_01",
+        "SCENARIO_BENIGN_BACKUP_01",
+        "SCENARIO_SUPPLY_CHAIN_01"
+      ],
+      "scheduledOffsets": [25, 100, 180],
+      "unlocksNext": "CAMPAIGN_SHIFT_05",
+      "rewardTier": 3,
+      "targetScore": 360
+    },
+    {
+      "id": "CAMPAIGN_SHIFT_05",
+      "shiftNumber": 5,
+      "title": "Shift 5: Zero Hour — Ransomware Outbreak",
+      "subtitle": "SMB Lateral Spread & Volume Shadow Copy Destruction",
+      "requiredTier": 3,
+      "difficulty": "Maximum",
+      "briefing": "EMERGENCY OUTBREAK: Active enterprise ransomware deployment targeting departmental file shares. Stop SMB lateral movement across port 445, protect disaster recovery systems, and contain infected endpoints before disk encryption completes.",
+      "scenarioIds": [
+        "SCENARIO_BENIGN_ETL_01",
+        "SCENARIO_MACRO_PS_01",
+        "SCENARIO_DNS_TUNNEL_01",
+        "SCENARIO_RANSOMWARE_01"
+      ],
+      "scheduledOffsets": [20, 80, 160, 240],
+      "unlocksNext": null,
+      "rewardTier": 3,
+      "targetScore": 450
+    }
+  ]
+}

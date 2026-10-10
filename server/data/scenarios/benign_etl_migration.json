@@ -1,0 +1,128 @@
+{
+  "id": "SCENARIO_BENIGN_ETL_01",
+  "title": "Nightly Automated Data Warehouse ETL File Sync",
+  "category": "benign_baseline",
+  "severity": "Low",
+  "trigger_time_offset": 380,
+  "source_ip": "10.0.2.14",
+  "destination_ip": "10.0.2.40",
+  "destination_port": "445 (SMB / Data Warehouse Share)",
+  "protocol": "SMB2 / TCP",
+  "rule_fired": "ANOMALY_HIGH_VOLUME_SMB_FILE_ACCESS",
+  "hostname": "SRV-ETL-WORKER01.corp",
+  "summary": "High volume SMB read/write activity detected between ETL batch worker SRV-ETL-WORKER01 and data storage server SRV-FILE-02 processing 12,000 corporate analytics CSV/Parquet records during scheduled batch window.",
+  "raw_logs": [
+    "2026-10-09T03:40:00Z TASK_SCHEDULER: Task='\\Analytics\\Nightly_ETL_Sync' Status=RUNNING Action='C:\\Program Files\\DataOps\\etl_sync.exe' User='CORP\\svc_etl_batch'",
+    "2026-10-09T03:40:05Z Microsoft-Windows-Security-Auditing: EventID=5140 A network share object was accessed: ShareName='\\\\*\\analytics_export' SubjectUserName='svc_etl_batch' SourceIP='10.0.2.14'",
+    "2026-10-09T03:40:10Z EDR_MONITOR: HighRateFileModifications Count=12400 Files='sales_2026_q3_part*.parquet' Extension='.parquet' Action=ALLOW Ticket='SCHEDULED_ETL_JOB'",
+    "2026-10-09T03:40:15Z CMDB_LOOKUP: IP=10.0.2.14 Host=SRV-ETL-WORKER01 Environment=Corporate Data Lake Role=Nightly ETL Batch Ingestion ServiceAccount=svc_etl_batch"
+  ],
+  "logs_categorized": {
+    "auth": [
+      "2026-10-09T03:40:05Z Windows-Security: EventID=5140 Share Accessed: \\\\*\\analytics_export User=svc_etl_batch SourceIP=10.0.2.14"
+    ],
+    "firewall": [
+      "2026-10-09T03:40:04Z CISCO_ASA: %ASA-6-302013: Built inbound TCP connection 950112 for inside:10.0.2.14/50124 to inside:10.0.2.40/445"
+    ],
+    "proxy": [],
+    "dns": []
+  },
+  "pcap_packets": [
+    {
+      "no": 1,
+      "time": "0.000000",
+      "delta": "0.000",
+      "source": "10.0.2.14",
+      "destination": "10.0.2.40",
+      "protocol": "SMB2",
+      "length": 196,
+      "flags": "Tree Connect Request",
+      "info": "Tree Connect Request Tree: \\\\10.0.2.40\\analytics_export",
+      "payload_preview": "fe 53 4d 42 ... 5c 5c 31 30 2e 30 2e 32 2e 34 30 5c 61 6e 61 6c 79 74 69 63 73 5f 65 78 70 6f 72 74",
+      "details": {
+        "layer_eth": "Source: 00:50:56:c0:22:14, Destination: 00:0c:29:84:11:02",
+        "layer_ip": "IPv4: 10.0.2.14 -> 10.0.2.40",
+        "layer_trans": "TCP: Port 50124 -> 445 (SMB)",
+        "layer_app": "SMB2 Tree Connect to authorized business share 'analytics_export' (Not administrative share ADMIN$)."
+      }
+    },
+    {
+      "no": 2,
+      "time": "0.005100",
+      "delta": "0.005",
+      "source": "10.0.2.14",
+      "destination": "10.0.2.40",
+      "protocol": "SMB2",
+      "length": 1460,
+      "flags": "Write Request",
+      "info": "Write Request File: sales_2026_q3_part01.parquet Length: 1392 bytes",
+      "payload_preview": "fe 53 4d 42 ... 73 61 6c 65 73 5f 32 30 32 36 5f 71 33 5f 70 61 72 74 30 31 2e 70 61 72 71 75 65 74",
+      "details": {
+        "layer_eth": "Source: 00:50:56:c0:22:14, Destination: 00:0c:29:84:11:02",
+        "layer_ip": "IPv4: 10.0.2.14 -> 10.0.2.40",
+        "layer_trans": "TCP: Port 50124 -> 445",
+        "layer_app": "Standard Apache Parquet columnar analytics file write. Valid schema headers."
+      }
+    }
+  ],
+  "threat_intel": {
+    "10.0.2.14": {
+      "ip": "10.0.2.14",
+      "reputation_score": 0,
+      "verdict": "Internal Corporate ETL Worker",
+      "threat_level": "CLEAN / AUTHORIZED",
+      "asn": "RFC 1918 Private Subnet",
+      "country": "LOCAL",
+      "domain": "SRV-ETL-WORKER01.corp",
+      "threat_types": ["Data Analytics Pipeline Node"],
+      "passive_dns_count": 0,
+      "first_seen": "2023-03-01",
+      "reports_summary": "Authorized ETL data pipeline processor managed by Business Intelligence team."
+    },
+    "10.0.2.40": {
+      "ip": "10.0.2.40",
+      "reputation_score": 0,
+      "verdict": "Internal Department File Share",
+      "threat_level": "CLEAN",
+      "asn": "RFC 1918 Private Subnet",
+      "country": "LOCAL",
+      "domain": "SRV-FILE-02.corp",
+      "threat_types": ["Analytics Storage Share"],
+      "passive_dns_count": 0,
+      "first_seen": "2024-03-01",
+      "reports_summary": "Core department storage repository hosting business intelligence exports."
+    }
+  },
+  "endpoint_processes": [
+    {
+      "pid": 3810,
+      "ppid": 1104,
+      "name": "etl_sync.exe",
+      "user": "CORP\\svc_etl_batch",
+      "command": "\"C:\\Program Files\\DataOps\\etl_sync.exe\" --config C:\\DataOps\\nightly.json",
+      "status": "Running",
+      "hash": "7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b",
+      "integrity": "Medium",
+      "note": "AUTHORIZED DATA PIPELINE: Signed corporate binary syncing sales parquet files to analytics share."
+    }
+  ],
+  "optimal_action": "Dismiss",
+  "acceptable_actions": [],
+  "scoring": {
+    "Dismiss": 85,
+    "Escalate": -20,
+    "Block IP": -150,
+    "Isolate Host": -200
+  },
+  "feedback": {
+    "Dismiss": "ACCURATE ANALYSIS: Correctly dismissed legitimate ETL batch synchronization. You verified the files were standard .parquet data tables on the analytics_export share, the process was the authorized etl_sync.exe binary under service account 'svc_etl_batch', and no ransomware indicators (like shadow copy deletion) were present.",
+    "Escalate": "MINOR PENALTY: Escalated routine nightly analytics file sync to Tier 2. Reviewing the file extensions (.parquet vs .locked) and service account confirms expected batch workload.",
+    "Block IP": "OPERATIONAL DISRUPTION: Blocked the primary analytics data warehouse worker 10.0.2.14! Executive BI reporting dashboards failed to update for morning trading.",
+    "Isolate Host": "CRITICAL OPERATIONAL OUTAGE: You isolated corporate file server SRV-FILE-02 during routine analytics processing, causing service interruption."
+  },
+  "educational_rationale": {
+    "topic": "High-Volume File Operations: Ransomware vs Business ETL Ingestion",
+    "certification_relevance": "Security+ SY0-701 (Section 4.2 Triage Heuristics, Section 3.1 Operational Baselines) & Network+ (Section 4.1 SMB File Sharing & Port 445)",
+    "deep_dive": "High file modification rates on SMB (port 445) trigger behavioral threshold alerts. To distinguish between ransomware and batch ETL jobs: (1) Share Name: Ransomware accesses ADMIN$ or C$ to drop remote stubs; ETL jobs access designated business shares like \\\\*\\analytics_export; (2) File Extensions: Ransomware introduces random or ransom extensions (.locked, .enc) and drops ransom note .txt files; ETL jobs manipulate valid business formats (.parquet, .csv); (3) System Recovery: Ransomware executes vssadmin to destroy restore points; ETL jobs never touch vssadmin or wbadmin."
+  }
+}

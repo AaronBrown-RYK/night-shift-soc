@@ -1,0 +1,99 @@
+{
+  "id": "SCENARIO_BENIGN_SCANNER_01",
+  "title": "Internal Security Scanner Routine Sweep (Scheduled)",
+  "category": "benign_baseline",
+  "severity": "Low",
+  "trigger_time_offset": 180,
+  "source_ip": "10.0.5.20",
+  "destination_ip": "10.0.1.0/24 Subnet",
+  "destination_port": "Multiple (80, 443, 8080, 8443)",
+  "protocol": "TCP / HTTP",
+  "rule_fired": "IDS_INTERNAL_PORT_PROBE_ANOMALY",
+  "hostname": "SEC-SCAN-CORP01.corp",
+  "summary": "Internal IP 10.0.5.20 performing structured TCP port queries against corporate accounting subnets during Tuesday maintenance window.",
+  "raw_logs": [
+    "2026-10-09T02:11:00Z CISCO_ASA: %ASA-6-302013: Built inbound TCP connection 901248 for outside:10.0.5.20/48102 to inside:10.0.1.15/443",
+    "2026-10-09T02:11:01Z SURICATA: [ALERT] [1:2009214:3] ET SCAN Nessus/Qualys Vulnerability Scanner HTTP User-Agent Detected [Classification: Web Application Activity] [Priority: 3] {TCP} 10.0.5.20:48102 -> 10.0.1.15:443",
+    "2026-10-09T02:11:02Z NGINX_ACCESS: 10.0.5.20 - - [09/Oct/2026:02:11:02 +0000] \"GET /robots.txt HTTP/1.1\" 200 45 \"-\" \"Nessus-SOAP-Audit/10.4.1 (Authorized Security Team Scan - Ticket CHG-2026-881)\""
+  ],
+  "logs_categorized": {
+    "firewall": [
+      "2026-10-09T02:11:00Z CISCO_ASA: %ASA-6-302013: Built inbound TCP connection 901248 for outside:10.0.5.20/48102 to inside:10.0.1.15/443",
+      "2026-10-09T02:11:01Z SURICATA: [ALERT] [1:2009214:3] ET SCAN Nessus/Qualys Vulnerability Scanner HTTP User-Agent Detected [Classification: Web Application Activity] {TCP} 10.0.5.20:48102 -> 10.0.1.15:443"
+    ],
+    "proxy": [
+      "2026-10-09T02:11:02Z NGINX_ACCESS: 10.0.5.20 - - [09/Oct/2026:02:11:02 +0000] \"GET /robots.txt HTTP/1.1\" 200 45 \"-\" \"Nessus-SOAP-Audit/10.4.1 (Authorized Security Team Scan - Ticket CHG-2026-881)\""
+    ],
+    "auth": [
+      "2026-10-09T02:10:55Z ASSET_DB: Host: SEC-SCAN-CORP01.corp (10.0.5.20) | Owner: SecOps Internal Red/Blue Audit | Tag: Authorized_Scanner | MaintenanceWindow: TUE_0100-0400_UTC"
+    ],
+    "dns": []
+  },
+  "pcap_packets": [
+    {
+      "no": 1,
+      "time": "0.000000",
+      "delta": "0.000",
+      "source": "10.0.5.20",
+      "destination": "10.0.1.15",
+      "protocol": "HTTP",
+      "length": 194,
+      "flags": "[PSH, ACK]",
+      "info": "GET /robots.txt HTTP/1.1 (User-Agent: Nessus-SOAP-Audit/10.4.1)",
+      "payload_preview": "47 45 54 20 2f 72 6f 62 6f 74 73 2e 74 78 74 20 48 54 54 50 2f 31 2e 31 ... 55 73 65 72 2d 41 67 65 6e 74 3a 20 4e 65 73 73 75 73",
+      "details": {
+        "layer_eth": "Source: 00:50:56:b1:22:33, Destination: 00:0c:29:84:11:02",
+        "layer_ip": "IPv4: 10.0.5.20 -> 10.0.1.15, TTL=64",
+        "layer_trans": "TCP: Port 48102 -> 443",
+        "layer_app": "HTTP Request Header explicitly identifies Nessus scanner and Authorized Audit Change Ticket CHG-2026-881."
+      }
+    }
+  ],
+  "threat_intel": {
+    "10.0.5.20": {
+      "ip": "10.0.5.20",
+      "reputation_score": 0,
+      "verdict": "Authorized Internal Security Tool",
+      "threat_level": "CLEAN / AUTHORIZED",
+      "asn": "RFC 1918 Private Management Subnet",
+      "country": "LOCAL",
+      "domain": "SEC-SCAN-CORP01.corp",
+      "threat_types": ["Enterprise Nessus Vulnerability Scanner"],
+      "passive_dns_count": 0,
+      "first_seen": "2023-05-01",
+      "reports_summary": "Corporate Tenable Nessus appliance. Tagged in CMDB as authorized scanner."
+    }
+  },
+  "endpoint_processes": [
+    {
+      "pid": 890,
+      "ppid": 1,
+      "name": "nessusd",
+      "user": "nessus",
+      "command": "/opt/nessus/sbin/nessusd -D -q",
+      "status": "Running",
+      "hash": "3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a",
+      "integrity": "Root",
+      "note": "Verified vendor binary signed by Tenable Network Security Inc."
+    }
+  ],
+  "optimal_action": "Dismiss",
+  "acceptable_actions": [],
+  "scoring": {
+    "Dismiss": 90,
+    "Escalate": -30,
+    "Block IP": -120,
+    "Isolate Host": -180
+  },
+  "feedback": {
+    "Dismiss": "ACCURATE TRIAGE: Verified source IP 10.0.5.20 belongs to the SecOps Nessus scanner, HTTP headers confirm authorized Change Ticket CHG-2026-881, and timing aligns with scheduled maintenance window. Correctly dismissed as benign baseline activity.",
+    "Escalate": "MINOR PENALTY: Escalated routine scheduled scanner activity to Tier 2. While not a breach, reviewing asset tags and user-agent tokens avoids wasting senior incident responder bandwidth.",
+    "Block IP": "OPERATIONAL DISRUPTION: Blocked the company's own vulnerability scanner! This aborted the corporate compliance audit mandated by ISO 27001.",
+    "Isolate Host": "CRITICAL OPERATIONAL ERROR: You isolated the corporate vulnerability management server SEC-SCAN-CORP01! All scheduled compliance scanning was knocked offline."
+  },
+  "educational_rationale": {
+    "topic": "Vulnerability Scanning vs Malicious Reconnaissance (False Positive Discipline)",
+    "certification_relevance": "Security+ SY0-701 (Section 3.1 Vulnerability Management & Section 2.1 Threat Actors vs Legitimate Assessments) & Network+ (Section 4.2 Network Policies & Asset Categorization)",
+    "deep_dive": "A mature SOC analyst does not treat every port scan as an adversary. True vulnerability scanners (Tenable Nessus, Rapid7 InsightVM, Qualys) operate from designated management subnets and transmit explicit identification headers (e.g. 'Nessus-SOAP-Audit' with change ticket references). Checking the corporate CMDB (Configuration Management Database) and Change Management tickets is step 1 before reacting to internal scanning alerts."
+  }
+}

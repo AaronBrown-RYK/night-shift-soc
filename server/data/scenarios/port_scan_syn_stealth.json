@@ -1,0 +1,209 @@
+{
+  "id": "SCENARIO_PORT_SCAN_01",
+  "title": "Aggressive TCP SYN Scan from External IP",
+  "category": "port_scan",
+  "severity": "Medium",
+  "trigger_time_offset": 15,
+  "source_ip": "203.0.113.88",
+  "destination_ip": "198.51.100.10",
+  "destination_port": "Multiple (21, 22, 23, 80, 443, 445, 3389, 8080)",
+  "protocol": "TCP",
+  "rule_fired": "SURICATA_ET_SCAN_NMAP_SYN_SWEEP",
+  "hostname": "EDGE-FW-01.corp",
+  "summary": "Rapid succession of TCP SYN packets with no corresponding ACK or FIN across sequential low and high ports within 12 seconds.",
+  "raw_logs": [
+    "Oct 09 02:01:14 EDGE-FW-01 kernel: [SURICATA] ET SCAN Potential Nmap SYN Scan Detected: SRC=203.0.113.88 DST=198.51.100.10 PROTO=TCP SPT=49152 DPT=21 FLAGS=SYN TTL=51",
+    "Oct 09 02:01:14 EDGE-FW-01 kernel: [SURICATA] ET SCAN Potential Nmap SYN Scan Detected: SRC=203.0.113.88 DST=198.51.100.10 PROTO=TCP SPT=49153 DPT=22 FLAGS=SYN TTL=51",
+    "Oct 09 02:01:15 EDGE-FW-01 kernel: [SURICATA] ET SCAN Potential Nmap SYN Scan Detected: SRC=203.0.113.88 DST=198.51.100.10 PROTO=TCP SPT=49154 DPT=23 FLAGS=SYN TTL=51",
+    "Oct 09 02:01:16 EDGE-FW-01 kernel: [SURICATA] ET SCAN Potential Nmap SYN Scan Detected: SRC=203.0.113.88 DST=198.51.100.10 PROTO=TCP SPT=49155 DPT=80 FLAGS=SYN TTL=51",
+    "Oct 09 02:01:17 EDGE-FW-01 kernel: [SURICATA] ET SCAN Potential Nmap SYN Scan Detected: SRC=203.0.113.88 DST=198.51.100.10 PROTO=TCP SPT=49156 DPT=443 FLAGS=SYN TTL=51",
+    "Oct 09 02:01:18 EDGE-FW-01 kernel: [SURICATA] ET SCAN Potential Nmap SYN Scan Detected: SRC=203.0.113.88 DST=198.51.100.10 PROTO=TCP SPT=49157 DPT=3389 FLAGS=SYN TTL=51",
+    "Oct 09 02:01:19 EDGE-FW-01 kernel: [SURICATA] ET SCAN Potential Nmap SYN Scan Detected: SRC=203.0.113.88 DST=198.51.100.10 PROTO=TCP SPT=49158 DPT=8080 FLAGS=SYN TTL=51"
+  ],
+  "logs_categorized": {
+    "firewall": [
+      "Oct 09 02:01:14 EDGE-FW-01 kernel: [SURICATA] ET SCAN Potential Nmap SYN Scan: SRC=203.0.113.88 DST=198.51.100.10 DPT=21 FLAGS=SYN",
+      "Oct 09 02:01:14 EDGE-FW-01 kernel: [SURICATA] ET SCAN Potential Nmap SYN Scan: SRC=203.0.113.88 DST=198.51.100.10 DPT=22 FLAGS=SYN",
+      "Oct 09 02:01:16 EDGE-FW-01 kernel: [SURICATA] ET SCAN Potential Nmap SYN Scan: SRC=203.0.113.88 DST=198.51.100.10 DPT=80 FLAGS=SYN",
+      "Oct 09 02:01:17 EDGE-FW-01 kernel: [SURICATA] ET SCAN Potential Nmap SYN Scan: SRC=203.0.113.88 DST=198.51.100.10 DPT=443 FLAGS=SYN",
+      "Oct 09 02:01:20 EDGE-FW-01 iptables[1042]: RULE=DEFAULT_DROP IN=eth0 SRC=203.0.113.88 DST=198.51.100.10 DPT=445 FLAGS=SYN"
+    ],
+    "auth": [
+      "Oct 09 02:00:00 EDGE-FW-01 sshd[901]: Server listening on 0.0.0.0 port 22."
+    ],
+    "dns": [
+      "Oct 09 02:01:10 EDGE-FW-01 named: Reverse lookup ptr 88.113.0.203.in-addr.arpa (NXDOMAIN)"
+    ],
+    "proxy": []
+  },
+  "pcap_packets": [
+    {
+      "no": 1,
+      "time": "0.000000",
+      "delta": "0.000",
+      "source": "203.0.113.88",
+      "destination": "198.51.100.10",
+      "protocol": "TCP",
+      "length": 58,
+      "flags": "[SYN] Seq=0",
+      "info": "49152 -> 21 [SYN] Seq=0 Win=1024 Len=0 MSS=1460 (FTP Port Probe)",
+      "payload_preview": "45 00 00 2c 9b 8c 00 00 33 06 91 10 cb 00 71 58 c6 33 64 0a c0 00 00 15 00 00 00 00 00 00 00 00 60 02 04 00",
+      "details": {
+        "layer_eth": "Source: e4:8d:8c:11:22:33, Destination: 00:0c:29:84:11:02",
+        "layer_ip": "IPv4: 203.0.113.88 -> 198.51.100.10, TTL=51, Protocol=6 (TCP)",
+        "layer_trans": "TCP: Port 49152 -> 21 (FTP), SYN=1, ACK=0",
+        "layer_app": "Nmap stealth SYN scan probe directed at FTP control port."
+      }
+    },
+    {
+      "no": 2,
+      "time": "0.000410",
+      "delta": "0.000",
+      "source": "198.51.100.10",
+      "destination": "203.0.113.88",
+      "protocol": "TCP",
+      "length": 54,
+      "flags": "[RST, ACK] Seq=1 Ack=1",
+      "info": "21 -> 49152 [RST, ACK] Seq=1 Ack=1 Win=0 Len=0 (Port Closed)",
+      "payload_preview": "45 00 00 28 00 00 40 00 40 06 c8 44 c6 33 64 0a cb 00 71 58 00 15 c0 00 ...",
+      "details": {
+        "layer_eth": "Source: 00:0c:29:84:11:02, Destination: e4:8d:8c:11:22:33",
+        "layer_ip": "IPv4: 198.51.100.10 -> 203.0.113.88, TTL=64",
+        "layer_trans": "TCP: Port 21 -> 49152, RST=1, ACK=1",
+        "layer_app": "Target gateway indicates port 21 is closed."
+      }
+    },
+    {
+      "no": 3,
+      "time": "0.012100",
+      "delta": "0.011",
+      "source": "203.0.113.88",
+      "destination": "198.51.100.10",
+      "protocol": "TCP",
+      "length": 58,
+      "flags": "[SYN] Seq=0",
+      "info": "49153 -> 22 [SYN] Seq=0 Win=1024 Len=0 (SSH Port Probe)",
+      "payload_preview": "45 00 00 2c 9b 8d ...",
+      "details": {
+        "layer_eth": "Source: e4:8d:8c:11:22:33, Destination: 00:0c:29:84:11:02",
+        "layer_ip": "IPv4: 203.0.113.88 -> 198.51.100.10",
+        "layer_trans": "TCP: Port 49153 -> 22 (SSH), SYN=1",
+        "layer_app": "Nmap stealth probe targeting SSH port 22."
+      }
+    },
+    {
+      "no": 4,
+      "time": "0.012500",
+      "delta": "0.000",
+      "source": "198.51.100.10",
+      "destination": "203.0.113.88",
+      "protocol": "TCP",
+      "length": 60,
+      "flags": "[SYN, ACK] Seq=0 Ack=1",
+      "info": "22 -> 49153 [SYN, ACK] Seq=0 Ack=1 Win=29200 Len=0 (Port Open!)",
+      "payload_preview": "45 00 00 2c 00 00 40 00 40 06 c8 40 c6 33 64 0a cb 00 71 58 00 16 c0 01 ...",
+      "details": {
+        "layer_eth": "Source: 00:0c:29:84:11:02, Destination: e4:8d:8c:11:22:33",
+        "layer_ip": "IPv4: 198.51.100.10 -> 203.0.113.88",
+        "layer_trans": "TCP: Port 22 -> 49153, SYN=1, ACK=1",
+        "layer_app": "Gateway acknowledges SSH port 22 is OPEN."
+      }
+    },
+    {
+      "no": 5,
+      "time": "0.013100",
+      "delta": "0.000",
+      "source": "203.0.113.88",
+      "destination": "198.51.100.10",
+      "protocol": "TCP",
+      "length": 54,
+      "flags": "[RST] Seq=1",
+      "info": "49153 -> 22 [RST] Seq=1 Win=0 Len=0 (HALF-OPEN TEARDOWN)",
+      "payload_preview": "45 00 00 28 9b 8e ...",
+      "details": {
+        "layer_eth": "Source: e4:8d:8c:11:22:33, Destination: 00:0c:29:84:11:02",
+        "layer_ip": "IPv4: 203.0.113.88 -> 198.51.100.10",
+        "layer_trans": "TCP: Port 49153 -> 22, RST=1",
+        "layer_app": "SIGNATURE HALF-OPEN SCAN: Scanner tears down handshake with RST before completing ACK."
+      }
+    }
+  ],
+  "threat_intel": {
+    "203.0.113.88": {
+      "ip": "203.0.113.88",
+      "reputation_score": 88,
+      "verdict": "Suspicious / Known Scanner",
+      "threat_level": "HIGH",
+      "asn": "AS64512 (HostVenture Anonymous VPN / VPS)",
+      "country": "NL",
+      "threat_types": ["Port Scanner", "Nmap Host Discovery", "Masscan Node"],
+      "passive_dns_count": 14,
+      "first_seen": "2026-08-04",
+      "reports_summary": "Reported across 30+ enterprise honeypots for automated TCP SYN scan sweeps and SSH service enumeration."
+    },
+    "198.51.100.10": {
+      "ip": "198.51.100.10",
+      "reputation_score": 0,
+      "verdict": "Corporate Perimeter Gateway",
+      "threat_level": "CLEAN",
+      "asn": "AS13335 (Corporate Enterprise WAN)",
+      "country": "US",
+      "domain": "EDGE-FW-01.corp",
+      "threat_types": ["Border Firewall / Reverse Proxy"],
+      "passive_dns_count": 0,
+      "first_seen": "2023-01-01",
+      "reports_summary": "Primary corporate internet gateway. Publicly accessible interfaces."
+    }
+  },
+  "endpoint_processes": [
+    {
+      "pid": 1,
+      "ppid": 0,
+      "name": "systemd",
+      "user": "root",
+      "command": "/sbin/init",
+      "status": "Running",
+      "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "integrity": "Root"
+    },
+    {
+      "pid": 840,
+      "ppid": 1,
+      "name": "suricata",
+      "user": "root",
+      "command": "/usr/bin/suricata -c /etc/suricata/suricata.yaml -i eth0",
+      "status": "Running",
+      "hash": "8a7b6c5d4e3f2a1b0c9d8e7f6a5b4c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8a7b",
+      "integrity": "Root"
+    },
+    {
+      "pid": 901,
+      "ppid": 1,
+      "name": "sshd",
+      "user": "root",
+      "command": "/usr/sbin/sshd -D",
+      "status": "Running",
+      "hash": "1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d",
+      "integrity": "Root"
+    }
+  ],
+  "optimal_action": "Block IP",
+  "acceptable_actions": ["Escalate"],
+  "scoring": {
+    "Block IP": 120,
+    "Escalate": 75,
+    "Dismiss": -250,
+    "Isolate Host": -80
+  },
+  "feedback": {
+    "Block IP": "EXCELLENT MITIGATION: Perimeter firewall rule deployed against 203.0.113.88. Attack surface reconnaissance halted before service enumeration could locate zero-day vulnerabilities.",
+    "Escalate": "ACCEPTABLE: Incident ticket escalated to Tier 2 Network Security. The threat was acknowledged, though immediate automated perimeter blocking is preferred for hostile reconnaissance sweeps.",
+    "Dismiss": "CRITICAL FAILURE: Reconnaissance scan dismissed as harmless noise! Adversary mapped exposed ports (SSH 22, RDP 3389) and initiated targeted exploitation 8 minutes later.",
+    "Isolate Host": "ERRONEOUS RESPONSE: You isolated the perimeter firewall gateway EDGE-FW-01! This caused a total corporate outage. The correct remediation was blocking the external adversary IP."
+  },
+  "educational_rationale": {
+    "topic": "Reconnaissance & TCP Half-Open (SYN) Scanning",
+    "certification_relevance": "Network+ N10-008 (Section 4.3 Network Security Appliances) & Security+ SY0-701 (Section 2.1 Threat Vectors & Discovery Tools)",
+    "deep_dive": "In a standard TCP 3-way handshake (SYN -> SYN-ACK -> ACK), a full connection is established. Nmap's SYN scan (-sS) sends a SYN packet; if the target replies with SYN-ACK (port open) or RST (port closed), the scanner immediately responds with RST rather than ACK. Because the handshake never completes, legacy applications frequently fail to log the attempt. SIEM/NIDS rules identify this pattern through bursts of incomplete half-open connections across sequential destination ports from an untrusted public IP."
+  }
+}

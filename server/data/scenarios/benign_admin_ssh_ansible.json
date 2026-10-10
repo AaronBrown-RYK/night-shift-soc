@@ -1,0 +1,109 @@
+{
+  "id": "SCENARIO_BENIGN_ADMIN_01",
+  "title": "Automated IT DevOps Configuration Push",
+  "category": "benign_baseline",
+  "severity": "Low",
+  "trigger_time_offset": 240,
+  "source_ip": "10.0.8.10",
+  "destination_ip": "10.0.2.22",
+  "destination_port": "22 (SSH)",
+  "protocol": "TCP / SSH",
+  "rule_fired": "AUTH_SPIKE_MULTI_ENDPOINT_SSH_KEY_EXCHANGE",
+  "hostname": "SRV-APP-PROD04.corp",
+  "summary": "Rapid succession of 15 automated SSH key-based authentications from DevOps Automation Controller to application clusters within 30 seconds.",
+  "raw_logs": [
+    "2026-10-09T02:14:10Z sshd[4910]: Accepted publickey for ansible_service from 10.0.8.10 port 38914 ssh2: RSA SHA256:7uK1jPz+9L0bYqW2mN8vX",
+    "2026-10-09T02:14:12Z sudo: ansible_service : TTY=unknown ; PWD=/home/ansible_service ; USER=root ; COMMAND=/usr/bin/apt-get update -q",
+    "2026-10-09T02:14:15Z sshd[4922]: Connection closed by authenticated user ansible_service 10.0.8.10 port 38914 [preauth=0]"
+  ],
+  "logs_categorized": {
+    "auth": [
+      "2026-10-09T02:14:10Z sshd[4910]: Accepted publickey for ansible_service from 10.0.8.10 port 38914 ssh2: RSA SHA256:7uK1jPz+9L0bYqW2mN8vX",
+      "2026-10-09T02:14:12Z sudo: ansible_service : TTY=unknown ; PWD=/home/ansible_service ; USER=root ; COMMAND=/usr/bin/apt-get update -q",
+      "2026-10-09T02:14:15Z sshd[4922]: Connection closed by authenticated user ansible_service 10.0.8.10 port 38914 [preauth=0]"
+    ],
+    "firewall": [
+      "2026-10-09T02:14:10Z CISCO_ASA: %ASA-6-302013: Built inbound TCP connection 912800 for inside:10.0.8.10/38914 to inside:10.0.2.22/22"
+    ],
+    "dns": [],
+    "proxy": []
+  },
+  "pcap_packets": [
+    {
+      "no": 1,
+      "time": "0.000000",
+      "delta": "0.000",
+      "source": "10.0.8.10",
+      "destination": "10.0.2.22",
+      "protocol": "SSH",
+      "length": 118,
+      "flags": "[PSH, ACK]",
+      "info": "SSH-2.0-OpenSSH_8.9p1 Ubuntu-3ubuntu0.6 (Key Exchange Init)",
+      "payload_preview": "53 53 48 2d 32 2e 30 2d 4f 70 65 6e 53 53 48 ...",
+      "details": {
+        "layer_eth": "Source: 00:50:56:c0:33:44, Destination: 00:0c:29:84:11:02",
+        "layer_ip": "IPv4: 10.0.8.10 -> 10.0.2.22, TTL=64",
+        "layer_trans": "TCP: Port 38914 -> 22 (SSH)",
+        "layer_app": "SSHv2 Key exchange using verified corporate Ansible deployment certificate."
+      }
+    }
+  ],
+  "threat_intel": {
+    "10.0.8.10": {
+      "ip": "10.0.8.10",
+      "reputation_score": 0,
+      "verdict": "Internal DevOps Controller",
+      "threat_level": "CLEAN / AUTHORIZED",
+      "asn": "RFC 1918 Private Management Subnet",
+      "country": "LOCAL",
+      "domain": "ANSIBLE-CONTROL-01.devops.corp",
+      "threat_types": ["Ansible Tower CI/CD Node"],
+      "passive_dns_count": 0,
+      "first_seen": "2023-08-01",
+      "reports_summary": "Authorized configuration management orchestrator. Key-based SSH access only."
+    }
+  },
+  "endpoint_processes": [
+    {
+      "pid": 4910,
+      "ppid": 901,
+      "name": "sshd",
+      "user": "root",
+      "command": "sshd: ansible_service [priv]",
+      "status": "Running",
+      "hash": "1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d",
+      "integrity": "Root",
+      "note": "Standard OpenSSH daemon handling key-based authentication."
+    },
+    {
+      "pid": 4914,
+      "ppid": 4910,
+      "name": "python3",
+      "user": "ansible_service",
+      "command": "/usr/bin/python3 /home/ansible_service/.ansible/tmp/ansible_apt_payload.py",
+      "status": "Running",
+      "hash": "8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d",
+      "integrity": "Standard",
+      "note": "Ansible automated apt package maintenance module execution."
+    }
+  ],
+  "optimal_action": "Dismiss",
+  "acceptable_actions": [],
+  "scoring": {
+    "Dismiss": 85,
+    "Escalate": -25,
+    "Block IP": -150,
+    "Isolate Host": -200
+  },
+  "feedback": {
+    "Dismiss": "CLEAN ANALYSIS: The logs show authorized public-key authentication for service account 'ansible_service' originating from verified Ansible control node 10.0.8.10. Dismissing false alert keeps the triage queue clear.",
+    "Escalate": "MINOR PENALTY: Escalated normal automated patching run. Reviewing the auth method (publickey vs password failure) shows this was an authorized CI/CD agent.",
+    "Block IP": "PRODUCTION OUTAGE: You blocked the central Ansible Automation Controller! Automated security patches failed to deploy to 140 servers.",
+    "Isolate Host": "CRITICAL OPERATIONAL OUTAGE: You isolated production application server SRV-APP-PROD04 during routine patch management, causing service downtime."
+  },
+  "educational_rationale": {
+    "topic": "Public Key Authentication vs Password Brute Force & Service Account Baselines",
+    "certification_relevance": "Security+ SY0-701 (Section 3.3 Identity and Access Management) & Network+ (Section 4.1 Secure Protocols - SSH Port 22 & Public Key Infrastructure)",
+    "deep_dive": "Notice the difference in sshd logs between malicious brute-forcing ('Failed password for invalid user from public IP') and legitimate infrastructure-as-code automation ('Accepted publickey for ansible_service from 10.0.8.10'). When investigating SSH alerts, examine whether the auth type was password or publickey, verify the source hostname in CMDB, and verify that password authentication is disabled on service accounts."
+  }
+}

@@ -1,0 +1,181 @@
+{
+  "id": "SCENARIO_BRUTE_FORCE_01",
+  "title": "SSH/RDP Credential Stuffing Burst with Compromise",
+  "category": "brute_force",
+  "severity": "Critical",
+  "trigger_time_offset": 60,
+  "source_ip": "185.220.101.5",
+  "destination_ip": "10.0.2.15",
+  "destination_port": "22 (SSH) / 3389 (RDP)",
+  "protocol": "TCP",
+  "rule_fired": "WIN_EVT_4625_BRUTEFORCE_BURST_FOLLOWED_BY_4624",
+  "hostname": "SRV-BASTION-01.corp",
+  "summary": "52 failed authentication attempts within 45 seconds targeting common accounts, followed immediately by Event 4624 successful logon for account 'svc_backup'.",
+  "raw_logs": [
+    "2026-10-09T02:04:10.120Z Microsoft-Windows-Security-Auditing: EventID=4625 Keywords=Audit Failure AccountName=admin FailureReason=Unknown user name or bad password SubStatus=0xC000006A LogonType=10 Workstation=DESKTOP-HACK SourceIP=185.220.101.5 Port=51042",
+    "2026-10-09T02:04:12.331Z Microsoft-Windows-Security-Auditing: EventID=4625 Keywords=Audit Failure AccountName=root FailureReason=Unknown user name or bad password SubStatus=0xC000006A LogonType=10 Workstation=DESKTOP-HACK SourceIP=185.220.101.5 Port=51043",
+    "2026-10-09T02:04:15.910Z Microsoft-Windows-Security-Auditing: EventID=4625 Keywords=Audit Failure AccountName=administrator FailureReason=Account locked out SubStatus=0xC0000234 LogonType=10 Workstation=DESKTOP-HACK SourceIP=185.220.101.5 Port=51044",
+    "2026-10-09T02:04:38.204Z Microsoft-Windows-Security-Auditing: EventID=4625 Keywords=Audit Failure AccountName=backup FailureReason=Unknown user name or bad password SubStatus=0xC000006A LogonType=10 Workstation=DESKTOP-HACK SourceIP=185.220.101.5 Port=51045",
+    "2026-10-09T02:04:42.880Z Microsoft-Windows-Security-Auditing: EventID=4624 Keywords=Audit Success TargetUserName=svc_backup TargetDomainName=CORP LogonType=10 LogonProcessName=User32 AuthenticationPackageName=Negotiate WorkstationName=DESKTOP-HACK SourceIP=185.220.101.5 Port=51046 ElevStatus=TokenElevationTypeFull"
+  ],
+  "logs_categorized": {
+    "auth": [
+      "2026-10-09T02:04:10.120Z Microsoft-Windows-Security-Auditing: EventID=4625 FailureReason='Unknown user or bad password' SubStatus=0xC000006A User=admin SourceIP=185.220.101.5",
+      "2026-10-09T02:04:12.331Z Microsoft-Windows-Security-Auditing: EventID=4625 FailureReason='Unknown user or bad password' SubStatus=0xC000006A User=root SourceIP=185.220.101.5",
+      "2026-10-09T02:04:15.910Z Microsoft-Windows-Security-Auditing: EventID=4625 FailureReason='Account locked out' SubStatus=0xC0000234 User=administrator SourceIP=185.220.101.5",
+      "2026-10-09T02:04:38.204Z Microsoft-Windows-Security-Auditing: EventID=4625 FailureReason='Unknown user or bad password' SubStatus=0xC000006A User=backup SourceIP=185.220.101.5",
+      "2026-10-09T02:04:42.880Z Microsoft-Windows-Security-Auditing: EventID=4624 Success TargetUserName=svc_backup LogonType=10 SourceIP=185.220.101.5 ElevStatus=TokenElevationTypeFull",
+      "2026-10-09T02:04:45.012Z Microsoft-Windows-Security-Auditing: EventID=4672 SpecialPrivilegesAssigned: SeBackupPrivilege, SeRestorePrivilege, SeTakeOwnershipPrivilege TargetUserName=svc_backup"
+    ],
+    "firewall": [
+      "2026-10-09T02:04:09Z CISCO_ASA: %ASA-6-302013: Built inbound TCP connection 901230 for outside:185.220.101.5/51042 to inside:10.0.2.15/3389",
+      "2026-10-09T02:04:42Z CISCO_ASA: %ASA-6-302013: Built inbound TCP connection 901280 for outside:185.220.101.5/51046 to inside:10.0.2.15/3389"
+    ],
+    "dns": [],
+    "proxy": []
+  },
+  "pcap_packets": [
+    {
+      "no": 1,
+      "time": "0.000000",
+      "delta": "0.000",
+      "source": "185.220.101.5",
+      "destination": "10.0.2.15",
+      "protocol": "RDP",
+      "length": 108,
+      "flags": "[PSH, ACK]",
+      "info": "Client Connection Request (TPKT / X.224 / CredSSP TSRequest)",
+      "payload_preview": "03 00 00 6c 02 f0 80 7f 65 62 30 60 a0 03 02 01 02 a1 ...",
+      "details": {
+        "layer_eth": "Source: 00:50:56:a1:00:11, Destination: 00:0c:29:84:11:02",
+        "layer_ip": "IPv4: 185.220.101.5 -> 10.0.2.15, TTL=48, Protocol=TCP",
+        "layer_trans": "TCP: Port 51042 -> 3389 (RDP)",
+        "layer_app": "RDP Negotiation: CredSSP Authentication attempt for user 'admin'."
+      }
+    },
+    {
+      "no": 2,
+      "time": "0.051200",
+      "delta": "0.051",
+      "source": "10.0.2.15",
+      "destination": "185.220.101.5",
+      "protocol": "RDP",
+      "length": 84,
+      "flags": "[PSH, ACK]",
+      "info": "CredSSP Logon Failure (STATUS_LOGON_FAILURE 0xC000006A)",
+      "payload_preview": "03 00 00 54 02 f0 80 ... c0 00 00 6a",
+      "details": {
+        "layer_eth": "Source: 00:0c:29:84:11:02, Destination: 00:50:56:a1:00:11",
+        "layer_ip": "IPv4: 10.0.2.15 -> 185.220.101.5, TTL=128",
+        "layer_trans": "TCP: Port 3389 -> 51042",
+        "layer_app": "RDP Server returns NTSTATUS 0xC000006A: Bad password."
+      }
+    },
+    {
+      "no": 3,
+      "time": "32.760100",
+      "delta": "32.708",
+      "source": "185.220.101.5",
+      "destination": "10.0.2.15",
+      "protocol": "RDP",
+      "length": 142,
+      "flags": "[PSH, ACK]",
+      "info": "CredSSP TSRequest (Attempting account 'svc_backup')",
+      "payload_preview": "03 00 00 8e 02 f0 80 7f ...",
+      "details": {
+        "layer_eth": "Source: 00:50:56:a1:00:11, Destination: 00:0c:29:84:11:02",
+        "layer_ip": "IPv4: 185.220.101.5 -> 10.0.2.15",
+        "layer_trans": "TCP: Port 51046 -> 3389",
+        "layer_app": "Adversary switches dictionary candidate to 'svc_backup'."
+      }
+    },
+    {
+      "no": 4,
+      "time": "32.812400",
+      "delta": "0.052",
+      "source": "10.0.2.15",
+      "destination": "185.220.101.5",
+      "protocol": "RDP",
+      "length": 218,
+      "flags": "[PSH, ACK]",
+      "info": "Server MCS Attach User Confirm (AUTHENTICATION SUCCESS! Session ID=3)",
+      "payload_preview": "03 00 00 da 02 f0 80 2e ... 00 00 00 00 [LOGON ACCEPTED]",
+      "details": {
+        "layer_eth": "Source: 00:0c:29:84:11:02, Destination: 00:50:56:a1:00:11",
+        "layer_ip": "IPv4: 10.0.2.15 -> 185.220.101.5",
+        "layer_trans": "TCP: Port 3389 -> 51046",
+        "layer_app": "AUTHENTICATION ACCEPTED: Remote desktop interactive channel initialized."
+      }
+    }
+  ],
+  "threat_intel": {
+    "185.220.101.5": {
+      "ip": "185.220.101.5",
+      "reputation_score": 95,
+      "verdict": "Malicious / Tor Exit Relay",
+      "threat_level": "CRITICAL",
+      "asn": "AS206238 (Zwiebelfreunde Tor Network)",
+      "country": "DE",
+      "threat_types": ["Tor Exit Node", "RDP Brute Forcer", "Credential Stuffing Botnet"],
+      "passive_dns_count": 0,
+      "first_seen": "2025-05-19",
+      "reports_summary": "Known Tor Exit Node used in automated credential stuffing attacks against remote access gateways."
+    },
+    "10.0.2.15": {
+      "ip": "10.0.2.15",
+      "reputation_score": 0,
+      "verdict": "Corporate Bastion Server",
+      "threat_level": "CLEAN",
+      "asn": "RFC 1918 Private Address Space",
+      "country": "LOCAL",
+      "domain": "SRV-BASTION-01.corp",
+      "threat_types": ["Administrative Jumpbox"],
+      "passive_dns_count": 0,
+      "first_seen": "2023-11-01",
+      "reports_summary": "Critical jump host utilized by system administrators to access internal server enclaves."
+    }
+  },
+  "endpoint_processes": [
+    {
+      "pid": 724,
+      "ppid": 490,
+      "name": "lsass.exe",
+      "user": "NT AUTHORITY\\SYSTEM",
+      "command": "C:\\Windows\\system32\\lsass.exe",
+      "status": "Running",
+      "hash": "7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b",
+      "integrity": "System",
+      "note": "Processed 52 logon failures before validating Kerberos/NTLM ticket for svc_backup."
+    },
+    {
+      "pid": 3812,
+      "ppid": 1104,
+      "name": "rdpclip.exe",
+      "user": "CORP\\svc_backup",
+      "command": "rdpclip.exe",
+      "status": "Running",
+      "hash": "5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e",
+      "integrity": "High",
+      "note": "Active interactive remote desktop session spawned by svc_backup from 185.220.101.5."
+    }
+  ],
+  "optimal_action": "Isolate Host",
+  "acceptable_actions": ["Block IP", "Escalate"],
+  "scoring": {
+    "Isolate Host": 150,
+    "Block IP": 100,
+    "Escalate": 70,
+    "Dismiss": -300
+  },
+  "feedback": {
+    "Isolate Host": "CRITICAL CONTAINMENT SUCCESS: SRV-BASTION-01 isolated via EDR. Because the attacker achieved Event 4624 (Logon Type 10) with elevated administrative privileges, host isolation severed their active interactive session and prevented lateral movement.",
+    "Block IP": "PARTIAL SUCCESS: Blocked external IP 185.220.101.5 at the border. Note: Because an active session already succeeded (Event 4624), the attacker retained control unless host isolation or session termination occurred.",
+    "Escalate": "ACCEPTABLE: Incident escalated to Tier 2 IR team. In a live breach with active privileged logon, immediate containment (Isolate Host) is best practice, but escalation prevented disaster.",
+    "Dismiss": "CATASTROPHIC BREACH: Dismissed an active root/service account takeover! Adversary utilized SeBackupPrivilege to dump the Active Directory NTDS.dit database and pivot domain-wide."
+  },
+  "educational_rationale": {
+    "topic": "Windows Security Auditing & Brute-Force / Credential Stuffing",
+    "certification_relevance": "Security+ SY0-701 (Section 2.4 Authentication & Authorization Attacks, Section 4.2 Incident Response Playbooks) & Network+ (Section 4.1 Remote Access Protocols - RDP Port 3389)",
+    "deep_dive": "Windows Event ID 4625 records failed logons. Note SubStatus 0xC000006A (bad password) and 0xC0000234 (account lockout). Logon Type 10 specifically indicates 'RemoteInteractive' (Terminal Services / RDP), while Logon Type 3 indicates network share/SMB. The critical turning point is Event ID 4624 (Logon Success) immediately following the failure burst, paired with Event ID 4672 (Special Privileges assigned, like SeBackupPrivilege). This signifies a confirmed breach requiring immediate containment."
+  }
+}

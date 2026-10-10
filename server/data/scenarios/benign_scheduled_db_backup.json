@@ -1,0 +1,123 @@
+{
+  "id": "SCENARIO_BENIGN_BACKUP_01",
+  "title": "Automated Off-Hours Database Snapshot DR Replication",
+  "category": "benign_baseline",
+  "severity": "Low",
+  "trigger_time_offset": 320,
+  "source_ip": "10.0.2.30",
+  "destination_ip": "10.0.9.15",
+  "destination_port": "443 (HTTPS / Internal DR S3 Vault)",
+  "protocol": "TLS / TCP",
+  "rule_fired": "NETFLOW_LARGE_OUTBOUND_DATA_SPIKE_OFF_HOURS",
+  "hostname": "SRV-DB-PROD01.corp",
+  "summary": "High volume bandwidth spike (3.8 GB) detected at 03:00 AM between production database cluster SRV-DB-PROD01 and Disaster Recovery storage enclave during Tuesday maintenance window.",
+  "raw_logs": [
+    "2026-10-09T03:00:00Z CRON[2811]: (postgres) CMD (/opt/scripts/replicate_dr_snapshots.sh --target backup-vault-dr.corp.internal)",
+    "2026-10-09T03:00:15Z CISCO_NETFLOW: FlowRecord SrcIP=10.0.2.30 DstIP=10.0.9.15 DstPort=443 Proto=6 BytesSent=4080214890 Duration=580s Tag=DR_Replication_VLAN",
+    "2026-10-09T03:00:18Z SQUID_PROXY: CONNECT backup-vault-dr.corp.internal:443 200 BytesSent=3.8GB UserAgent='aws-sdk-go/v1.44.0 (Enterprise DR Backup Tool)'",
+    "2026-10-09T03:00:22Z CMDB_ASSET: Host=SRV-DB-PROD01 ServiceAccount=svc_db_replication Owner=Database Reliability Engineering Schedule='TUE_0300_UTC' Ticket='CHG-AUTO-DR-SYNC'"
+  ],
+  "logs_categorized": {
+    "firewall": [
+      "2026-10-09T03:00:15Z CISCO_NETFLOW: SrcIP=10.0.2.30 DstIP=10.0.9.15 DstPort=443 Proto=6 BytesSent=3.8GB Tag=DR_Replication"
+    ],
+    "auth": [
+      "2026-10-09T03:00:00Z CRON: User=postgres Executed=/opt/scripts/replicate_dr_snapshots.sh",
+      "2026-10-09T03:00:02Z ASSET_DB: Ticket=CHG-AUTO-DR-SYNC Verified DR Storage Enclave 10.0.9.15"
+    ],
+    "proxy": [
+      "2026-10-09T03:00:18Z SQUID_PROXY: CONNECT backup-vault-dr.corp.internal:443 200 BytesSent=3.8GB UserAgent='aws-sdk-go/v1.44.0'"
+    ],
+    "dns": []
+  },
+  "pcap_packets": [
+    {
+      "no": 1,
+      "time": "0.000000",
+      "delta": "0.000",
+      "source": "10.0.2.30",
+      "destination": "10.0.9.15",
+      "protocol": "TLSv1.3",
+      "length": 1460,
+      "flags": "[PSH, ACK]",
+      "info": "Application Data (Encrypted Database Snapshot Archive .sql.zst)",
+      "payload_preview": "17 03 03 05 78 ... [VALID ENCRYPTED POSTGRESQL ARCHIVE STREAM TO INTERNAL DR HOST]",
+      "details": {
+        "layer_eth": "Source: 00:50:56:b1:00:30, Destination: 00:0c:29:84:11:02",
+        "layer_ip": "IPv4: 10.0.2.30 -> 10.0.9.15, TTL=64",
+        "layer_trans": "TCP: Port 48200 -> 443",
+        "layer_app": "Internal HTTPS transfer to authorized Disaster Recovery S3 cluster (10.0.9.15)."
+      }
+    }
+  ],
+  "threat_intel": {
+    "10.0.9.15": {
+      "ip": "10.0.9.15",
+      "reputation_score": 0,
+      "verdict": "Internal Corporate DR Storage Repository",
+      "threat_level": "CLEAN / AUTHORIZED",
+      "asn": "RFC 1918 Private Management Enclave",
+      "country": "LOCAL",
+      "domain": "backup-vault-dr.corp.internal",
+      "threat_types": ["Disaster Recovery Storage Vault"],
+      "passive_dns_count": 0,
+      "first_seen": "2023-01-01",
+      "reports_summary": "Designated corporate disaster recovery storage repository. Authorized off-hours sync target."
+    },
+    "10.0.2.30": {
+      "ip": "10.0.2.30",
+      "reputation_score": 0,
+      "verdict": "Internal Primary Production Database",
+      "threat_level": "CLEAN",
+      "asn": "RFC 1918 Private Subnet",
+      "country": "LOCAL",
+      "domain": "SRV-DB-PROD01.corp",
+      "threat_types": ["PostgreSQL Primary Node"],
+      "passive_dns_count": 0,
+      "first_seen": "2022-06-01",
+      "reports_summary": "Production database cluster node."
+    }
+  },
+  "endpoint_processes": [
+    {
+      "pid": 2811,
+      "ppid": 1,
+      "name": "cron",
+      "user": "root",
+      "command": "/usr/sbin/cron -f",
+      "status": "Running",
+      "hash": "1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b",
+      "integrity": "Root"
+    },
+    {
+      "pid": 3410,
+      "ppid": 2811,
+      "name": "bash",
+      "user": "postgres",
+      "command": "/bin/bash /opt/scripts/replicate_dr_snapshots.sh",
+      "status": "Running",
+      "hash": "3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a",
+      "integrity": "Standard",
+      "note": "SCHEDULED DR SCRIPT: Automated cron task pushing nightly snapshots to Disaster Recovery vault."
+    }
+  ],
+  "optimal_action": "Dismiss",
+  "acceptable_actions": [],
+  "scoring": {
+    "Dismiss": 90,
+    "Escalate": -25,
+    "Block IP": -150,
+    "Isolate Host": -220
+  },
+  "feedback": {
+    "Dismiss": "ACCURATE TRIAGE: Correctly dismissed authorized off-hours database replication. Checking the destination IP (10.0.9.15) showed it was the company's internal Disaster Recovery vault, and the process was the scheduled cron job 'replicate_dr_snapshots.sh'. Good false-positive discipline!",
+    "Escalate": "MINOR PENALTY: Escalated routine scheduled database replication to Tier 2. The ticket number CHG-AUTO-DR-SYNC and internal destination IP confirmed this was expected operations.",
+    "Block IP": "OPERATIONAL DISRUPTION: Blocked the internal Disaster Recovery storage vault 10.0.9.15! Nightly backups failed to replicate across the enterprise.",
+    "Isolate Host": "CRITICAL PRODUCTION OUTAGE: You isolated the primary production database server SRV-DB-PROD01! All customer transaction processing was knocked offline."
+  },
+  "educational_rationale": {
+    "topic": "Off-Hours Data Transfers vs Scheduled DR Backups (False-Positive Discipline)",
+    "certification_relevance": "Security+ SY0-701 (Section 3.1 Business Continuity & DR Operations, Section 4.2 Triage Verification) & Network+ (Section 4.2 Network Policies & Asset Categorization)",
+    "deep_dive": "Large data transfers at 03:00 AM are not inherently malicious. A mature analyst examines the destination: Is it an untrusted public cloud storage bucket (e.g. wasabisys.com), or an internal RFC 1918 Disaster Recovery subnet (10.0.9.15)? They examine the process: Is it an unapproved third-party tool like rclone executing from a user Temp directory, or the corporate PostgreSQL cron script running under service account 'postgres'? Verifying the corporate Change Management system (CHG ticket) separates benign operational maintenance from active insider exfiltration."
+  }
+}

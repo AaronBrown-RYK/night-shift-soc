@@ -1,0 +1,192 @@
+{
+  "id": "SCENARIO_RANSOMWARE_01",
+  "title": "Ransomware Precursor: Volume Shadow Deletion & SMB Lateral Spread",
+  "category": "ransomware_precursor",
+  "severity": "Critical",
+  "trigger_time_offset": 240,
+  "source_ip": "10.0.2.88",
+  "destination_ip": "10.0.2.10",
+  "destination_port": "445 (SMB / Lateral Movement)",
+  "protocol": "SMB2 / TCP",
+  "rule_fired": "RANSOMWARE_SHADOW_COPY_DELETION_AND_MASS_SMB_BURST",
+  "hostname": "SRV-FILE-PRIMARY.corp",
+  "summary": "High-urgency enterprise ransomware outbreak detected: Host 10.0.2.88 executed 'vssadmin.exe delete shadows /all /quiet' to destroy disaster recovery backups, followed by rapid SMB2 lateral connections targeting ADMIN$ and C$ shares across internal file servers deploying mass file renames with .locked extensions.",
+  "raw_logs": [
+    "2026-10-09T03:30:11Z SYSMON[1]: EventID=1 Image='C:\\Windows\\System32\\vssadmin.exe' CommandLine='vssadmin.exe delete shadows /all /quiet' ParentImage='C:\\Windows\\System32\\cmd.exe' User='NT AUTHORITY\\SYSTEM'",
+    "2026-10-09T03:30:13Z SYSMON[1]: EventID=1 Image='C:\\Windows\\System32\\wbadmin.exe' CommandLine='wbadmin.exe DELETE SYSTEMSTATEBACKUP -keepVersions:0' ParentImage='C:\\Windows\\System32\\cmd.exe' User='NT AUTHORITY\\SYSTEM'",
+    "2026-10-09T03:30:15Z Microsoft-Windows-Security-Auditing: EventID=7045 A new service was installed in the system: ServiceName='PSEXESVC' ImagePath='%SystemRoot%\\PSEXESVC.exe' ServiceType='user mode service' StartType='demand start'",
+    "2026-10-09T03:30:18Z Microsoft-Windows-Security-Auditing: EventID=5145 NetworkShareAccessCheck ShareName='\\\\*\\ADMIN$' RelativeTargetName='PSEXESVC.exe' AccessList='WriteData, AppendData' SubjectUserName='svc_domain_admin' SourceIP='10.0.2.88'",
+    "2026-10-09T03:30:22Z DEFENDER_FOR_ENDPOINT: Alert=RansomwareBehaviorDetected Velocity='185 file renames per second' Extension='.locked' DroppedFile='README_RESTORE_FILES.txt' Hostname=SRV-FILE-PRIMARY Status=Active_Outbreak"
+  ],
+  "logs_categorized": {
+    "auth": [
+      "2026-10-09T03:30:15Z Windows-Security: EventID=7045 Service Installed: PSEXESVC ServiceAccount=LocalSystem",
+      "2026-10-09T03:30:18Z Windows-Security: EventID=5145 Share Checked: \\\\*\\ADMIN$ Account=svc_domain_admin SourceIP=10.0.2.88"
+    ],
+    "firewall": [
+      "2026-10-09T03:30:14Z CISCO_ASA: %ASA-6-302013: Built inbound TCP connection 940110 for inside:10.0.2.88/49912 to inside:10.0.2.10/445",
+      "2026-10-09T03:30:16Z CISCO_ASA: %ASA-6-302013: Built inbound TCP connection 940115 for inside:10.0.2.88/49913 to inside:10.0.2.11/445",
+      "2026-10-09T03:30:18Z CISCO_ASA: %ASA-6-302013: Built inbound TCP connection 940120 for inside:10.0.2.88/49914 to inside:10.0.2.12/445"
+    ],
+    "dns": [],
+    "proxy": []
+  },
+  "pcap_packets": [
+    {
+      "no": 1,
+      "time": "0.000000",
+      "delta": "0.000",
+      "source": "10.0.2.88",
+      "destination": "10.0.2.10",
+      "protocol": "SMB2",
+      "length": 182,
+      "flags": "Tree Connect Request",
+      "info": "Tree Connect Request Tree: \\\\10.0.2.10\\ADMIN$",
+      "payload_preview": "fe 53 4d 42 40 00 00 00 00 00 00 00 03 00 01 00 ... 5c 5c 31 30 2e 30 2e 32 2e 31 30 5c 41 44 4d 49 4e 24",
+      "details": {
+        "layer_eth": "Source: 00:50:56:c0:88:11, Destination: 00:0c:29:84:11:02",
+        "layer_ip": "IPv4: 10.0.2.88 -> 10.0.2.10, TTL=128",
+        "layer_trans": "TCP: Port 49912 -> 445 (Microsoft-DS / SMB)",
+        "layer_app": "SMB2 Command: Tree Connect to hidden administrative share ADMIN$."
+      }
+    },
+    {
+      "no": 2,
+      "time": "0.012100",
+      "delta": "0.012",
+      "source": "10.0.2.88",
+      "destination": "10.0.2.10",
+      "protocol": "SMB2",
+      "length": 248,
+      "flags": "Create Request File",
+      "info": "Create Request File: PSEXESVC.exe (Write/Append access)",
+      "payload_preview": "fe 53 4d 42 40 00 ... 50 53 45 58 45 53 56 43 2e 65 78 65 [DEPLOYING LATERAL EXECUTION STUB]",
+      "details": {
+        "layer_eth": "Source: 00:50:56:c0:88:11, Destination: 00:0c:29:84:11:02",
+        "layer_ip": "IPv4: 10.0.2.88 -> 10.0.2.10",
+        "layer_trans": "TCP: Port 49912 -> 445",
+        "layer_app": "SMB2 Create: Drops PSEXESVC binary to execute commands under SYSTEM context on target file server."
+      }
+    },
+    {
+      "no": 3,
+      "time": "0.084100",
+      "delta": "0.072",
+      "source": "10.0.2.88",
+      "destination": "10.0.2.11",
+      "protocol": "SMB2",
+      "length": 182,
+      "flags": "Tree Connect Request",
+      "info": "Tree Connect Request Tree: \\\\10.0.2.11\\C$ (LATERAL SPREAD TO SECOND SERVER)",
+      "payload_preview": "fe 53 4d 42 40 00 ... 5c 5c 31 30 2e 30 2e 32 2e 31 31 5c 43 24",
+      "details": {
+        "layer_eth": "Source: 00:50:56:c0:88:11, Destination: 00:0c:29:84:11:02",
+        "layer_ip": "IPv4: 10.0.2.88 -> 10.0.2.11",
+        "layer_trans": "TCP: Port 49913 -> 445",
+        "layer_app": "Lateral movement fan-out hitting port 445 on sequential subnet hosts."
+      }
+    }
+  ],
+  "threat_intel": {
+    "10.0.2.88": {
+      "ip": "10.0.2.88",
+      "reputation_score": 99,
+      "verdict": "Compromised Internal Lateral Pivot Node",
+      "threat_level": "CRITICAL",
+      "asn": "RFC 1918 Private Address Space",
+      "country": "LOCAL",
+      "domain": "WS-STAGING-04.corp",
+      "threat_types": ["Active Ransomware Staging Node", "PsExec Lateral Controller"],
+      "passive_dns_count": 0,
+      "first_seen": "2024-01-10",
+      "reports_summary": "Compromised staging workstation deploying ransomware binaries across corporate subnet 10.0.2.0/24."
+    },
+    "10.0.2.10": {
+      "ip": "10.0.2.10",
+      "reputation_score": 0,
+      "verdict": "Core Enterprise Primary File Cluster",
+      "threat_level": "TARGETED ASSET",
+      "asn": "RFC 1918 Private Address Space",
+      "country": "LOCAL",
+      "domain": "SRV-FILE-PRIMARY.corp",
+      "threat_types": ["Critical Enterprise Storage"],
+      "passive_dns_count": 0,
+      "first_seen": "2022-01-01",
+      "reports_summary": "Primary enterprise repository hosting department databases and shared document repositories."
+    }
+  },
+  "endpoint_processes": [
+    {
+      "pid": 688,
+      "ppid": 492,
+      "name": "services.exe",
+      "user": "NT AUTHORITY\\SYSTEM",
+      "command": "C:\\Windows\\system32\\services.exe",
+      "status": "Running",
+      "hash": "1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b",
+      "integrity": "System"
+    },
+    {
+      "pid": 7410,
+      "ppid": 688,
+      "name": "PSEXESVC.exe",
+      "user": "NT AUTHORITY\\SYSTEM",
+      "command": "C:\\Windows\\PSEXESVC.exe",
+      "status": "Running",
+      "hash": "4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c",
+      "integrity": "System",
+      "note": "LATERAL EXECUTION STUB: Remote service installed via SMB ADMIN$ share from 10.0.2.88."
+    },
+    {
+      "pid": 7480,
+      "ppid": 7410,
+      "name": "cmd.exe",
+      "user": "NT AUTHORITY\\SYSTEM",
+      "command": "cmd.exe /c vssadmin.exe delete shadows /all /quiet",
+      "status": "Running",
+      "hash": "2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c",
+      "integrity": "System"
+    },
+    {
+      "pid": 7520,
+      "ppid": 7480,
+      "name": "vssadmin.exe",
+      "user": "NT AUTHORITY\\SYSTEM",
+      "command": "vssadmin.exe delete shadows /all /quiet",
+      "status": "Running",
+      "hash": "9c8b7a6f5e4d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e0d9c8b",
+      "integrity": "System",
+      "note": "RANSOMWARE PRECURSOR: Volume Shadow Copies purged to prevent recovery from local Windows restore points."
+    },
+    {
+      "pid": 7800,
+      "ppid": 7410,
+      "name": "lockbit_agent.exe",
+      "user": "NT AUTHORITY\\SYSTEM",
+      "command": "\"C:\\ProgramData\\lockbit_agent.exe\" -pass 491204 -path \"D:\\Shares\"",
+      "status": "Running",
+      "hash": "f1e2d3c4b5a697887766554433221100aabbccddeeff00112233445566778899",
+      "integrity": "System",
+      "note": "ACTIVE ENCRYPTION RUNTIME: Mass renaming files to .locked extension."
+    }
+  ],
+  "optimal_action": "Isolate Host",
+  "acceptable_actions": ["Escalate"],
+  "scoring": {
+    "Isolate Host": 180,
+    "Block IP": 60,
+    "Escalate": 75,
+    "Dismiss": -400
+  },
+  "feedback": {
+    "Isolate Host": "CRITICAL ENTERPRISE RESCUE: SRV-FILE-PRIMARY isolated immediately via EDR! The combination of vssadmin shadow deletion, PsExec remote service deployment (Event 7045), and SMB2 tree connects to ADMIN$ signaled an active ransomware deployment. Isolating the server halted the encryption engine at 2% completion and severed the lateral infection vector across subnet 10.0.2.0/24.",
+    "Block IP": "INEFFECTIVE REMEDIATION: You attempted a border firewall IP block, but this attack is internal-to-internal SMB lateral movement across subnet 10.0.2.0/24! Perimeter border firewalls do not inspect intra-VLAN Layer 2/3 traffic. The encryption continued unimpeded.",
+    "Escalate": "ACCEPTABLE: Escalated to Emergency Enterprise CSIRT. In an active ransomware outbreak with 185 renames/second, immediate host isolation is the only measure that prevents total disk encryption, but escalating triggered enterprise containment.",
+    "Dismiss": "CATASTROPHIC ENTERPRISE WIPEOUT: Dismissed active LockBit ransomware outbreak! The entire enterprise primary file storage and disaster backups were encrypted and destroyed within 6 minutes."
+  },
+  "educational_rationale": {
+    "topic": "Ransomware Precursors, SMB Lateral Movement (Port 445) & Shadow Copy Deletion",
+    "certification_relevance": "Security+ SY0-701 (Section 2.4 Lateral Movement & Pivoting, Section 4.3 Endpoint Containment) & Network+ (Section 4.1 SMB Port 445 vs NetBIOS Port 139, Section 1.5 VLAN Segmentation)",
+    "deep_dive": "Modern ransomware operators follow a predictable execution playbook prior to file encryption: (1) Inhibit System Recovery: Windows Volume Shadow Copies store snapshot backups. Attackers execute 'vssadmin.exe delete shadows /all /quiet' and 'wbadmin.exe DELETE SYSTEMSTATEBACKUP' so the victim cannot revert files using Windows Restore Points; (2) Lateral Spread via SMB: Attackers use compromised administrative credentials to push services across SMB (Port 445) to administrative shares (ADMIN$, C$) using PsExec or WMI (Windows Event ID 7045 - Service Installed, Event ID 5145 - Share Checked); (3) Why Blocking IP Fails: Perimeter border firewalls only police WAN boundary traffic; they do not filter intra-subnet switch traffic. Only EDR Host Isolation can sever local Layer 2/3 network adapters and halt local file encryption."
+  }
+}

