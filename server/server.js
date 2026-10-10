@@ -35,7 +35,10 @@ if (fs.existsSync(CLIENT_DIST)) {
   // Catch-all fallback for SPA in Express 5
   app.use((req, res, next) => {
     if (req.method === 'GET' && !req.path.startsWith('/api')) {
-      return res.sendFile(path.join(CLIENT_DIST, 'index.html'));
+      const indexPath = path.join(CLIENT_DIST, 'index.html');
+      if (fs.existsSync(indexPath)) {
+        return res.sendFile(indexPath);
+      }
     }
     next();
   });
