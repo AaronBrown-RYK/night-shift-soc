@@ -114,5 +114,27 @@ export const socApi = {
     });
     if (!res.ok) throw new Error(`Failed to update tutorial completion: ${res.statusText}`);
     return res.json();
+  },
+
+  // Unlock All Campaign Shifts (Testing / Sandbox)
+  async unlockAllCampaigns(callsign = 'Echo-Seven') {
+    const res = await fetch(`${API_BASE}/analyst/unlock-campaigns`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ callsign })
+    });
+    if (!res.ok) throw new Error(`Failed to unlock campaigns: ${res.statusText}`);
+    return res.json();
+  },
+
+  // Reset Campaign Progression back to Shift 1
+  async resetCampaignProgression(callsign = 'Echo-Seven') {
+    const res = await fetch(`${API_BASE}/analyst/reset-campaigns`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ callsign })
+    });
+    if (!res.ok) throw new Error(`Failed to reset campaigns: ${res.statusText}`);
+    return res.json();
   }
 };

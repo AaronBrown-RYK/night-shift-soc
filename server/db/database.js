@@ -154,6 +154,16 @@ class SOCDatabase {
     return this.getAnalystProfile(callsign);
   }
 
+  unlockAllCampaigns(callsign = 'Echo-Seven') {
+    this.db.prepare('UPDATE analysts SET unlocked_campaign_shift = 5 WHERE callsign = ?').run(callsign);
+    return this.getAnalystProfile(callsign);
+  }
+
+  resetCampaigns(callsign = 'Echo-Seven') {
+    this.db.prepare('UPDATE analysts SET unlocked_campaign_shift = 1 WHERE callsign = ?').run(callsign);
+    return this.getAnalystProfile(callsign);
+  }
+
   saveShiftResult({ shiftId, analystCallsign = 'Echo-Seven', shiftTitle, campaignShiftNumber, isPractice = false, startedAt, endedAt, durationSeconds, finalScore, accuracyPercent, mtttSeconds, totalAlerts, caughtCount, missedCount, falsePositivePenalties, actions }) {
     const analyst = this.db.prepare('SELECT id, score, tier_level, shifts_completed, total_alerts_triaged, correct_actions, unlocked_campaign_shift FROM analysts WHERE callsign = ?').get(analystCallsign);
     if (!analyst) throw new Error(`Analyst not found: ${analystCallsign}`);

@@ -25,6 +25,7 @@ Phase 3 introduces handcrafted campaign operations, hierarchical analyst promoti
    - **Tier 2 (Threat Hunter — 400 XP)**: Unlocks *Wireshark Packet Capture Dissector* and *Threat Intel Feed*.
    - **Tier 3 (Senior Incident Responder — 1200 XP)**: Unlocks *EDR Process Tree Inspector* and network-wide *Host Isolation*.
    - **Sandbox Rank Override**: Built directly into the Analyst Dossier modal for instant testing and evaluation of all clearance tiers!
+   - **Unlock All Campaigns Testing Control**: Built directly into the Campaign Operations modal toolbar to instantly unlock and launch all 5 campaign operations for testing!
 
 3. **Persistent Career Analytics & Accuracy Trend**:
    - Visual historical accuracy % bar chart tracking performance trajectory across shifts.

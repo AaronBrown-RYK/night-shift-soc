@@ -77,4 +77,26 @@ router.post('/reset-tutorial', (req, res) => {
   }
 });
 
+// POST /api/analyst/unlock-campaigns
+router.post('/unlock-campaigns', (req, res) => {
+  try {
+    const { callsign = 'Echo-Seven' } = req.body;
+    const profile = db.unlockAllCampaigns(callsign);
+    res.json({ success: true, profile });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/analyst/reset-campaigns
+router.post('/reset-campaigns', (req, res) => {
+  try {
+    const { callsign = 'Echo-Seven' } = req.body;
+    const profile = db.resetCampaigns(callsign);
+    res.json({ success: true, profile });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

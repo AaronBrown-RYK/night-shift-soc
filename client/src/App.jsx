@@ -423,6 +423,7 @@ export default function App() {
         onClose={() => setIsCampaignOpen(false)}
         onLaunchCampaignShift={handleLaunchCampaignShift}
         analystProfile={analystProfile}
+        onProfileUpdated={(updated) => setAnalystProfile(updated)}
       />
 
       {/* Interactive Guided Tutorial Overlay */}
